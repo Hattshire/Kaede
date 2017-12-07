@@ -7,7 +7,6 @@ from io import BytesIO
 
 def on_button_clicked( widget ):
 	print("Hi Boi!! <3")
-	Image.open(BytesIO(get_image(search(["asdf",])[0]))).save("sample.jpg")
 
 def do_search( widget ):
 	data = search( widget.get_text().split( ' ' ) )
@@ -34,26 +33,29 @@ def get_image(post_data):
 
 def search(tags):
 	tag_string = "tags=" + '+'.join(tags)
-	return requests.get( _url( 'list', tag_string ) ).json()
+	response = requests.get( _url( 'list', tag_string ) )
+	result = []
+	print(response.content)
+	if( response.content ):
+		result = response.json()
+	return result
 
 
 if __name__ == '__main__':
-	win = Gtk.Window( title="Hello boi!!" )
+	builder = Gtk.Builder()
+	builder.add_from_file("main_window_ui.glade")
+	win = builder.get_object("window1")
+	win.set_title("Hello boi!!" )
 	win.connect( 'delete-event', Gtk.main_quit )
 
-	box = Gtk.Box()
-
-	inputter = Gtk.Entry()
+	inputter = builder.get_object("entry1")
 	inputter.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
 	inputter.connect( "activate", do_search )
 
-	vuvutton = Gtk.Button( label='Click Me! <3' )
+	vuvutton = builder.get_object("button1")
+	vuvutton.set_label('Click Me! <3' )
 	vuvutton.connect( "clicked", on_button_clicked )
 
-	box.pack_start(inputter, True, True, 0)
-	box.pack_start(vuvutton, True, True, 0)
-
-	win.add( box )
 	win.show_all()
 
 	Gtk.main()
