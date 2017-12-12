@@ -19,11 +19,9 @@ def image_widget_draw(widget,cairo_context,pixbuf):
 
 def image_on_click(widget,event_button,data):
 	popup_window = Gtk.Window()
-	popup_window.show_all()
 	Thread(target=ioc_thread,args=[popup_window,data]).start()
 
 def ioc_thread(popup_window,data):
-	popup_window.set_default_size( 400, 400)
 	image_data = get_image(data)
 	pixbuf_loader = GdkPixbuf.PixbufLoader.new()
 	pixbuf_loader.write(image_data)
@@ -36,8 +34,11 @@ def ioc_thread(popup_window,data):
 	image_widget.connect("draw", image_widget_draw,image_pixbuf)
 	image_widget_container = Gtk.Grid()
 	image_widget_container.attach(image_widget,0,0,1,1)
+	Gdk.threads_enter()
+	popup_window.set_default_size( image_pixbuf.get_width(), image_pixbuf.get_height())
 	popup_window.add(image_widget_container)
 	popup_window.show_all()
+	Gdk.threads_leave()
 
 def add_results(container, data):
 	width, height = container.get_size()
