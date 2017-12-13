@@ -20,7 +20,7 @@ class ImageWidget(Gtk.EventBox):
 
 	def image_on_click(self, widget,event_button,data):
 		popup_window = ImageWindow(self.pixbuf, data)
-		Thread(target=popup_window.ioc_thread).start()
+		popup_window.show_all()
 
 class SearchThread(Thread):
 	def __init__(self,results_container,):
@@ -124,7 +124,7 @@ class ImageWindow(Gtk.Window):
 		self.image_widget_container.attach(self.image_widget,0,0,1,1)
 		self.add(self.image_widget_container)
 
-		self.show_all()
+		Thread(target=self.load_image).start()
 
 	def image_widget_draw(self,widget,cairo_context,pixbuf):
 		width = widget.get_allocated_width()
@@ -138,20 +138,25 @@ class ImageWindow(Gtk.Window):
 		scaled_pixbuf = pixbuf.scale_simple(width,height,GdkPixbuf.InterpType.BILINEAR)
 		if(scaled_pixbuf == None):
 			return
+
 		x_offset = (widget.get_allocated_width() - width)//2
 		y_offset = (widget.get_allocated_height() - height)//2
+
 		Gdk.cairo_set_source_pixbuf(cairo_context,scaled_pixbuf,x_offset,y_offset)
 		cairo_context.paint()
 
-	def ioc_thread(self):
+	def load_image(self):
 		image_data = get_image(self.data)
+
 		pixbuf_loader = GdkPixbuf.PixbufLoader.new()
 		pixbuf_loader.write(image_data)
 		pixbuf = pixbuf_loader.get_pixbuf()
 		pixbuf_loader.close()
+
 		if(pixbuf == None):
 			return
 		self.pixbuf = pixbuf
+
 		Gdk.threads_enter()
 		self.image_widget.connect("draw", self.image_widget_draw,self.pixbuf)
 		Gdk.threads_leave()
