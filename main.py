@@ -121,8 +121,9 @@ class ImageWindow(Gtk.Window):
 		scaled_pixbuf = pixbuf.scale_simple(width,height,GdkPixbuf.InterpType.BILINEAR)
 		if(scaled_pixbuf == None):
 			return
-
-		Gdk.cairo_set_source_pixbuf(cairo_context,scaled_pixbuf,0,0)
+		x_offset = (widget.get_allocated_width() - width)//2
+		y_offset = (widget.get_allocated_height() - height)//2
+		Gdk.cairo_set_source_pixbuf(cairo_context,scaled_pixbuf,x_offset,y_offset)
 		cairo_context.paint()
 
 	def ioc_thread(self, popup_window,data):
