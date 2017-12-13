@@ -19,8 +19,8 @@ class ImageWidget(Gtk.EventBox):
 		self.connect("button_press_event",self.image_on_click,item_data)
 
 	def image_on_click(self, widget,event_button,data):
-		popup_window = ImageWindow()
-		Thread(target=popup_window.ioc_thread,args=[popup_window,data]).start()
+		popup_window = ImageWindow(self.pixbuf, data)
+		Thread(target=popup_window.ioc_thread).start()
 
 class SearchThread(Thread):
 	def __init__(self,results_container,):
@@ -50,6 +50,7 @@ class SearchThread(Thread):
 			pixbuf_loader.write(image_data)
 
 			image_pixbuf = pixbuf_loader.get_pixbuf()
+			pixbuf_loader.close()
 			if(image_pixbuf == None):
 				continue
 
@@ -65,7 +66,6 @@ class SearchThread(Thread):
 				container.set_size(width,height,)
 			container.put(image_event_widget,x,y)
 			Gdk.threads_leave()
-			pixbuf_loader.close()
 			y += image_pixbuf.get_height()
 
 	def stop(self):
@@ -109,6 +109,23 @@ class MainWindow(Gtk.Builder):
 		self.window.show_all()
 
 class ImageWindow(Gtk.Window):
+	def __init__(self,pixbuf=None, data=None):
+		super(ImageWindow,self).__init__()
+		self.pixbuf = pixbuf
+		self.data = data
+		self.set_default_size( data["width"], data["height"])
+
+		self.image_widget = Gtk.DrawingArea()
+		self.image_widget.connect("draw", self.image_widget_draw,self.pixbuf)
+		self.image_widget.set_hexpand(True)
+		self.image_widget.set_vexpand(True)
+
+		self.image_widget_container = Gtk.Grid()
+		self.image_widget_container.attach(self.image_widget,0,0,1,1)
+		self.add(self.image_widget_container)
+
+		self.show_all()
+
 	def image_widget_draw(self,widget,cairo_context,pixbuf):
 		width = widget.get_allocated_width()
 		height = widget.get_allocated_height()
@@ -126,25 +143,18 @@ class ImageWindow(Gtk.Window):
 		Gdk.cairo_set_source_pixbuf(cairo_context,scaled_pixbuf,x_offset,y_offset)
 		cairo_context.paint()
 
-	def ioc_thread(self, popup_window,data):
-		image_data = get_image(data)
+	def ioc_thread(self):
+		image_data = get_image(self.data)
 		pixbuf_loader = GdkPixbuf.PixbufLoader.new()
 		pixbuf_loader.write(image_data)
-		image_pixbuf = pixbuf_loader.get_pixbuf()
-		if(image_pixbuf == None):
-			return
-		image_widget = Gtk.DrawingArea()
-		image_widget.set_hexpand(True)
-		image_widget.set_vexpand(True)
-		image_widget.connect("draw", self.image_widget_draw,image_pixbuf)
-		image_widget_container = Gtk.Grid()
-		image_widget_container.attach(image_widget,0,0,1,1)
-		Gdk.threads_enter()
-		popup_window.set_default_size( image_pixbuf.get_width(), image_pixbuf.get_height())
-		popup_window.add(image_widget_container)
-		popup_window.show_all()
-		Gdk.threads_leave()
+		pixbuf = pixbuf_loader.get_pixbuf()
 		pixbuf_loader.close()
+		if(pixbuf == None):
+			return
+		self.pixbuf = pixbuf
+		Gdk.threads_enter()
+		self.image_widget.connect("draw", self.image_widget_draw,self.pixbuf)
+		Gdk.threads_leave()
 
 def _url( key, data = None ):
 	tail = { 
