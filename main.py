@@ -94,7 +94,7 @@ class MainWindow(Gtk.Builder):
 		self.inputter.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
 		self.inputter.connect( "activate", self.do_search, self.layyout )
 
-		self.search_thread = SearchThread(self.layyout,)
+		self.search_thread = SearchThread(self.layyout)
 
 	def do_search( self, widget, container ):
 		if(self.search_thread.ident != None):
@@ -112,7 +112,16 @@ class ImageWindow(Gtk.Window):
 	def image_widget_draw(self,widget,cairo_context,pixbuf):
 		width = widget.get_allocated_width()
 		height = widget.get_allocated_height()
+
+		if(width / height > pixbuf.get_width() / pixbuf.get_height()):
+			width = (height / pixbuf.get_height()) * pixbuf.get_width()
+		elif (width / height < pixbuf.get_width() / pixbuf.get_height()):
+			height = (width / pixbuf.get_width()) * pixbuf.get_height()
+
 		scaled_pixbuf = pixbuf.scale_simple(width,height,GdkPixbuf.InterpType.BILINEAR)
+		if(scaled_pixbuf == None):
+			return
+
 		Gdk.cairo_set_source_pixbuf(cairo_context,scaled_pixbuf,0,0)
 		cairo_context.paint()
 
