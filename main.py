@@ -4,7 +4,7 @@ gi.require_version( 'Gtk', '3.0' )
 from gi.repository import Gtk, Gdk, GdkPixbuf
 from PIL import Image
 from io import BytesIO
-from threading import Thread
+from threading import Thread, Event as threadingEvent
 
 class ImageWidget(Gtk.EventBox):
 	def __init__(self, pixbuf, item_data):
@@ -22,22 +22,18 @@ class ImageWidget(Gtk.EventBox):
 		popup_window = ImageWindow()
 		Thread(target=popup_window.ioc_thread,args=[popup_window,data]).start()
 
-class MainWindow(Gtk.Builder):
-	def __init__(self):
-		super(MainWindow, self).__init__()
-		self.add_from_file("main_window_ui.glade")
-		self.window = self.get_object("window1")
-		self.window.set_title("Hello boi!!" )
-		self.window.connect( 'delete-event', Gtk.main_quit )
+class SearchThread(Thread):
+	def __init__(self,results_container,):
+	    super(SearchThread, self).__init__()
+	    self.results_container = results_container
+	    self._stop_event = threadingEvent()
 
-		self.layyout = self.get_object("layout1")
+	def search(self,tags):
+		self.clear_layout()
+		self.tags = tags
 
-		self.inputter = self.get_object("entry1")
-		self.inputter.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
-		self.inputter.connect( "activate", self.do_search, self.layyout )
-
-	def do_search( self, widget, container ):
-		Thread(target=self.add_results,args=[container,widget.get_text().split( ' ' )]).start()
+	def run(self):
+		self.add_results(self.results_container, self.tags)
 
 	def add_results( self, container, tags):
 		data = search( tags )
@@ -45,7 +41,11 @@ class MainWindow(Gtk.Builder):
 		y = 0
 		x = 0
 		for item in data:
+			if(self.stopped()):
+				return
 			image_data = get_thumbnail(item)
+			if(self.stopped()):
+				return
 			pixbuf_loader = GdkPixbuf.PixbufLoader.new()
 			pixbuf_loader.write(image_data)
 
@@ -65,7 +65,45 @@ class MainWindow(Gtk.Builder):
 				container.set_size(width,height,)
 			container.put(image_event_widget,x,y)
 			Gdk.threads_leave()
+			pixbuf_loader.close()
 			y += image_pixbuf.get_height()
+
+	def stop(self):
+		self._stop_event.set()
+	def stopped(self):
+		return self._stop_event.is_set()
+
+	def clear_layout(self):
+		self.results_container.do_forall(self.results_container,False,self.remove_callback,None)
+		self.results_container.set_size(self.results_container.get_allocated_width(),self.results_container.get_allocated_height())
+
+	def remove_callback(self,widget,data):
+		widget.destroy()
+
+class MainWindow(Gtk.Builder):
+	def __init__(self):
+		super(MainWindow, self).__init__()
+		self.add_from_file("main_window_ui.glade")
+		self.window = self.get_object("window1")
+		self.window.set_title("Hello boi!!" )
+		self.window.connect( 'delete-event', Gtk.main_quit )
+
+		self.layyout = self.get_object("layout1")
+
+		self.inputter = self.get_object("entry1")
+		self.inputter.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
+		self.inputter.connect( "activate", self.do_search, self.layyout )
+
+		self.search_thread = SearchThread(self.layyout,)
+
+	def do_search( self, widget, container ):
+		if(self.search_thread.ident != None):
+			if(self.search_thread.is_alive()):
+				self.search_thread.stop()
+				self.search_thread.join(0.5)
+			self.search_thread = SearchThread(self.layyout)
+		self.search_thread.search(widget.get_text().split( ' ' ))
+		self.search_thread.start()
 
 	def show_all(self):
 		self.window.show_all()
@@ -96,10 +134,7 @@ class ImageWindow(Gtk.Window):
 		popup_window.add(image_widget_container)
 		popup_window.show_all()
 		Gdk.threads_leave()
-
-
-
-
+		pixbuf_loader.close()
 
 def _url( key, data = None ):
 	tail = { 
@@ -130,7 +165,6 @@ def search(tags):
 	if( response.content ):
 		result = response.json()
 	return result
-
 
 if __name__ == '__main__':
 	builder = MainWindow()
