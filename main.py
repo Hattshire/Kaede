@@ -92,11 +92,11 @@ class MainWindow(Gtk.Builder):
 
 		self.inputter = self.get_object("entry1")
 		self.inputter.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
-		self.inputter.connect( "activate", self.do_search, self.layyout )
+		self.inputter.connect( "activate", self.do_search )
 
 		self.search_thread = SearchThread(self.layyout)
 
-	def do_search( self, widget, container ):
+	def do_search( self, widget ):
 		if(self.search_thread.ident != None):
 			if(self.search_thread.is_alive()):
 				self.search_thread.stop()
@@ -195,6 +195,7 @@ if __name__ == '__main__':
 	builder = MainWindow()
 
 	builder.show_all()
+	builder.do_search(builder.inputter)
 
 	Gdk.threads_init()
 	Gdk.threads_enter()
