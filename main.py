@@ -122,6 +122,7 @@ class ImageWindow(Gtk.Window):
 
 		self.image_widget_container = Gtk.Grid()
 		self.image_widget_container.attach(self.image_widget,0,0,1,1)
+		self.connect("button_press_event",self.image_widget_click,self.data)
 		self.add(self.image_widget_container)
 
 		Thread(target=self.load_image).start()
@@ -145,6 +146,9 @@ class ImageWindow(Gtk.Window):
 		Gdk.cairo_set_source_pixbuf(cairo_context,scaled_pixbuf,x_offset,y_offset)
 		cairo_context.paint()
 
+	def image_widget_click(self, widget,event_button,data):
+		self.pixbuf.savev(data["image"]+".png","png","","")
+
 	def load_image(self):
 		image_data = get_image(self.data)
 
@@ -159,6 +163,7 @@ class ImageWindow(Gtk.Window):
 
 		Gdk.threads_enter()
 		self.image_widget.connect("draw", self.image_widget_draw,self.pixbuf)
+		self.image_widget.queue_draw()
 		Gdk.threads_leave()
 
 def _url( key, data = None ):
