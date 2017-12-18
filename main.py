@@ -3,7 +3,6 @@ import gi,requests
 gi.require_version( 'Gtk', '3.0' )
 from gi.repository import Gtk, Gdk, GdkPixbuf
 from PIL import Image
-from io import BytesIO
 from threading import Thread, Event as threadingEvent
 
 class ImageWidget(Gtk.EventBox):
