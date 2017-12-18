@@ -99,7 +99,7 @@ class MainWindow( Gtk.Builder ):
 		self.add_from_file( "main_window_ui.glade" )
 
 		self.window = self.get_object( "window1" )
-		self.window.set_title( "Hello boi!!" )
+		self.window.set_title( "Kaede" )
 		self.window.connect( 'delete-event', Gtk.main_quit )
 
 		self.thumbnail_container = self.get_object( "layout1" )
@@ -117,6 +117,11 @@ class MainWindow( Gtk.Builder ):
 				self.search_thread.join( 0.5 )
 
 			self.search_thread = SearchThread( self.thumbnail_container )
+
+		search_tags = widget.get_text()
+
+		if(search_tags):
+			self.window.set_title( "Kaede - " + widget.get_text() )
 
 		self.search_thread.search( widget.get_text().split( ' ' ) )
 		self.search_thread.start()
@@ -144,6 +149,11 @@ class ImageWindow( Gtk.Window ):
 		self.connect( "button_press_event", self.image_widget_click, self.data )
 
 		self.add( self.image_widget_container )
+
+		if(data):
+			self.set_title(data['tags'])
+		else:
+			self.set_title("Image")
 
 		Thread( target = self.load_image ).start()
 
