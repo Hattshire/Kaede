@@ -34,17 +34,91 @@
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
+        <property name="margin">10</property>
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
-            <property name="action-name">this.test</property>
-            <property name="text">Placeholder setting</property>
+            <property name="menu-name">ratings-menu</property>
+            <property name="text">Shown ratings</property>
           </object>
         </child>
       </object>
       <packing>
         <property name="submenu">settings-menu</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="margin">10</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="spacing">5</property>
+            <property name="orientation">horizontal</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="expand">True</property>
+                <property name="halign">GTK_ALIGN_START</property>
+                <property name="label">Rating safe</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSwitch">
+                <property name="visible">True</property>
+                <property name="action-name">rating-safe</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="spacing">5</property>
+            <property name="orientation">horizontal</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="expand">True</property>
+                <property name="halign">GTK_ALIGN_START</property>
+                <property name="label">Rating questionable</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSwitch">
+                <property name="visible">True</property>
+                <property name="action-name">rating-questionable</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="spacing">5</property>
+            <property name="orientation">horizontal</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="expand">True</property>
+                <property name="halign">GTK_ALIGN_START</property>
+                <property name="label">Rating explicit</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSwitch">
+                <property name="visible">True</property>
+                <property name="action-name">rating-explicit</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="submenu">ratings-menu</property>
       </packing>
     </child>
   </object>
