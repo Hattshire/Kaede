@@ -1,242 +1,262 @@
 #!/usr/bin/python3
-import gi,requests
-gi.require_version( 'Gtk', '3.0' )
+import gi
+gi.require_version('Gtk', '3.0')
+import requests
 from gi.repository import Gtk, Gdk, GdkPixbuf
-from PIL import Image
 from threading import Thread, Event as threadingEvent
 
-class ImageWidget( Gtk.EventBox ):
-	''' Widget for thumbnails '''
 
-	def __init__( self, pixbuf, item_data ):
-		super( ImageWidget, self ).__init__()
+class ImageWidget(Gtk.EventBox):
+    ''' Widget for thumbnails '''
 
-		if( pixbuf == None ):
-			return None
+    def __init__(self, pixbuf, item_data):
+        super(ImageWidget, self).__init__()
 
-		self.pixbuf = pixbuf
-		self.image  = Gtk.Image.new_from_pixbuf( self.pixbuf )
-		self.image.show()
+        if(pixbuf is None):
+            return None
 
-		self.add( self.image )
-		self.connect( "button_press_event", self.image_on_click, item_data )
+        self.pixbuf = pixbuf
+        self.image = Gtk.Image.new_from_pixbuf(self.pixbuf)
+        self.image.show()
 
-	def image_on_click( self, widget, event_button, data ):
-		popup_window = ImageWindow( self.pixbuf, data )
-		popup_window.show_all()
+        self.add(self.image)
+        self.connect("button_press_event", self.image_on_click, item_data)
 
-class SearchThread( Thread ):
-	''' Image search worker '''
+    def image_on_click(self, widget, event_button, data):
+        popup_window = ImageWindow(self.pixbuf, data)
+        popup_window.show_all()
 
-	def __init__( self, results_container ):
-	    super( SearchThread, self ).__init__()
-	    self.results_container = results_container
-	    self._stop_event       = threadingEvent()
 
-	def search( self, tags ):
-		self.clear_layout()
-		self.tags = tags
+class SearchThread(Thread):
+    ''' Image search worker '''
 
-	def run( self ):
-		self.add_results( self.results_container, self.tags )
+    def __init__(self, results_container):
+        super(SearchThread, self).__init__()
+        self.results_container = results_container
+        self._stop_event = threadingEvent()
 
-	def add_results( self, container, tags ):
-		data = search( tags )
+    def search(self, tags):
+        self.clear_layout()
+        self.tags = tags
 
-		width, height = container.get_size()
+    def run(self):
+        self.add_results(self.results_container, self.tags)
 
-		y = 0
-		x = 0
+    def add_results(self, container, tags):
+        data = search(tags)
 
-		for item in data:
-			image_data = get_thumbnail( item )
-			if( self.stopped() ):
-				return
+        width, height = container.get_size()
 
-			pixbuf_loader = GdkPixbuf.PixbufLoader.new()
-			pixbuf_loader.write( image_data )
+        y = 0
+        x = 0
 
-			image_pixbuf = pixbuf_loader.get_pixbuf()
-			pixbuf_loader.close()
-			if( image_pixbuf == None ):
-				continue
+        for item in data:
+            image_data = get_thumbnail(item)
+            if(self.stopped()):
+                return
 
-			image_event_widget = ImageWidget( image_pixbuf, item )
-			image_event_widget.show()
+            pixbuf_loader = GdkPixbuf.PixbufLoader.new()
+            pixbuf_loader.write(image_data)
 
-			if( y + image_pixbuf.get_height() > height ):
-				y  = 0
-				x += 160
+            image_pixbuf = pixbuf_loader.get_pixbuf()
+            pixbuf_loader.close()
+            if(image_pixbuf is None):
+                continue
 
-			Gdk.threads_enter()
-			if( x + 160 > width ):
-				width += 160
-				container.set_size( width, height )
+            image_event_widget = ImageWidget(image_pixbuf, item)
+            image_event_widget.show()
 
-			container.put( image_event_widget, x, y )
-			Gdk.threads_leave()
+            if(y + image_pixbuf.get_height() > height):
+                y = 0
+                x += 160
 
-			y += image_pixbuf.get_height()
+            Gdk.threads_enter()
+            if(x + 160 > width):
+                width += 160
+                container.set_size(width, height)
 
-	def stop( self ):
-		self._stop_event.set()
+            container.put(image_event_widget, x, y)
+            Gdk.threads_leave()
 
-	def stopped( self ):
-		return self._stop_event.is_set()
+            y += image_pixbuf.get_height()
 
-	def clear_layout( self ):
-		self.results_container.do_forall( self.results_container, False, self.remove_callback, None )
-		self.results_container.set_size ( self.results_container.get_allocated_width(),
-			                              self.results_container.get_allocated_height() )
+    def stop(self):
+        self._stop_event.set()
 
-	def remove_callback( self, widget, data ):
-		widget.destroy()
+    def stopped(self):
+        return self._stop_event.is_set()
 
-class MainWindow( Gtk.Builder ):
-	def __init__( self ):
-		super( MainWindow, self ).__init__()
+    def clear_layout(self):
+        self.results_container.do_forall(self.results_container, False,
+                                         self.remove_callback, None)
+        self.results_container.set_size(
+            self.results_container.get_allocated_width(),
+            self.results_container.get_allocated_height())
 
-		self.add_from_file( "main_window_ui.glade" )
+    def remove_callback(self, widget, data):
+        widget.destroy()
 
-		self.window = self.get_object( "window1" )
-		self.window.set_title( "Kaede" )
-		self.window.connect( 'delete-event', Gtk.main_quit )
 
-		self.thumbnail_container = self.get_object( "layout1" )
+class MainWindow(Gtk.Builder):
+    def __init__(self):
+        super(MainWindow, self).__init__()
 
-		self.search_input = self.get_object( "entry1" )
-		self.search_input.set_icon_from_icon_name( Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic" )
-		self.search_input.connect( "activate", self.do_search )
+        self.add_from_file("main_window_ui.glade")
 
-		self.search_thread = SearchThread( self.thumbnail_container )
+        self.window = self.get_object("window1")
+        self.window.set_title("Kaede")
+        self.window.connect('delete-event', Gtk.main_quit)
 
-	def do_search( self, widget ):
-		if( self.search_thread.ident != None ):
-			if( self.search_thread.is_alive() ):
-				self.search_thread.stop()
-				self.search_thread.join( 0.5 )
+        self.thumbnail_container = self.get_object("layout1")
 
-			self.search_thread = SearchThread( self.thumbnail_container )
+        self.search_input = self.get_object("entry1")
 
-		search_tags = widget.get_text()
+        self.search_input.set_icon_from_icon_name(
+            Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
 
-		if(search_tags):
-			self.window.set_title( "Kaede - " + widget.get_text() )
+        self.search_input.connect("activate", self.do_search)
 
-		self.search_thread.search( widget.get_text().split( ' ' ) )
-		self.search_thread.start()
+        self.search_thread = SearchThread(self.thumbnail_container)
 
-	def show_all( self ):
-		self.window.show_all()
+    def do_search(self, widget):
+        if(self.search_thread.ident is not None):
+            if(self.search_thread.is_alive()):
+                self.search_thread.stop()
+                self.search_thread.join(0.5)
 
-class ImageWindow( Gtk.Window ):
-	''' To show the full-size image '''
+            self.search_thread = SearchThread(self.thumbnail_container)
 
-	def __init__( self, pixbuf = None, data = None ):
-		super( ImageWindow, self ).__init__()
+        search_tags = widget.get_text()
 
-		self.pixbuf = pixbuf
-		self.data   = data
-		self.set_default_size( data[ "width" ], data[ "height" ] )
+        if(search_tags):
+            self.window.set_title("Kaede - " + widget.get_text())
 
-		self.image_widget = Gtk.DrawingArea()
-		self.image_widget.connect( "draw", self.image_widget_draw, self.pixbuf )
-		self.image_widget.set_hexpand( True )
-		self.image_widget.set_vexpand( True )
+        self.search_thread.search(widget.get_text().split(' '))
+        self.search_thread.start()
 
-		self.image_widget_container = Gtk.Grid()
-		self.image_widget_container.attach( self.image_widget, 0, 0, 1, 1 )
-		self.connect( "button_press_event", self.image_widget_click, self.data )
+    def show_all(self):
+        self.window.show_all()
 
-		self.add( self.image_widget_container )
 
-		if(data):
-			self.set_title(data['tags'])
-		else:
-			self.set_title("Image")
+class ImageWindow(Gtk.Window):
+    ''' To show the full-size image '''
 
-		Thread( target = self.load_image ).start()
+    def __init__(self, pixbuf=None, data=None):
+        super(ImageWindow, self).__init__()
 
-	def image_widget_draw( self, widget, cairo_context, pixbuf ):
-		width  = widget.get_allocated_width()
-		height = widget.get_allocated_height()
+        self.pixbuf = pixbuf
+        self.data = data
+        self.set_default_size(data["width"], data["height"])
 
-		if  ( width/height > pixbuf.get_width()/pixbuf.get_height() ):
-			width = ( height/pixbuf.get_height() ) * pixbuf.get_width()
-		elif( width/height < pixbuf.get_width()/pixbuf.get_height() ):
-			height = ( width/pixbuf.get_width() ) * pixbuf.get_height()
+        self.image_widget = Gtk.DrawingArea()
+        self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
+        self.image_widget.set_hexpand(True)
+        self.image_widget.set_vexpand(True)
 
-		scaled_pixbuf = pixbuf.scale_simple( width, height, GdkPixbuf.InterpType.BILINEAR )
-		if( scaled_pixbuf == None ):
-			return
+        self.image_widget_container = Gtk.Grid()
+        self.image_widget_container.attach(self.image_widget, 0, 0, 1, 1)
+        self.connect("button_press_event", self.image_widget_click, self.data)
 
-		x_offset = ( widget.get_allocated_width()  - width  ) // 2
-		y_offset = ( widget.get_allocated_height() - height ) // 2
+        self.add(self.image_widget_container)
 
-		Gdk.cairo_set_source_pixbuf( cairo_context, scaled_pixbuf, x_offset, y_offset )
-		cairo_context.paint()
+        if(data):
+            self.set_title(data['tags'])
+        else:
+            self.set_title("Image")
 
-	def image_widget_click( self, widget, event_button, data ):
-		self.pixbuf.savev( data[ "image" ] + ".png", "png", "", "" )
+        Thread(target=self.load_image).start()
 
-	def load_image( self ):
-		image_data = get_image( self.data )
+    def image_widget_draw(self, widget, cairo_context, pixbuf):
+        width = widget.get_allocated_width()
+        height = widget.get_allocated_height()
 
-		pixbuf_loader = GdkPixbuf.PixbufLoader.new()
-		pixbuf_loader.write( image_data )
+        if (width / height > pixbuf.get_width() / pixbuf.get_height()):
+            width = (height / pixbuf.get_height()) * pixbuf.get_width()
+        elif(width / height < pixbuf.get_width() / pixbuf.get_height()):
+            height = (width / pixbuf.get_width()) * pixbuf.get_height()
 
-		pixbuf = pixbuf_loader.get_pixbuf()
-		pixbuf_loader.close()
+        scaled_pixbuf = pixbuf.scale_simple(width, height,
+                                            GdkPixbuf.InterpType.BILINEAR)
+        if(scaled_pixbuf is None):
+            return
 
-		if( pixbuf == None ):
-			return
-		self.pixbuf = pixbuf
+        x_offset = (widget.get_allocated_width() - width) // 2
+        y_offset = (widget.get_allocated_height() - height) // 2
 
-		Gdk.threads_enter()
-		self.image_widget.connect( "draw", self.image_widget_draw, self.pixbuf )
-		self.image_widget.queue_draw()
-		Gdk.threads_leave()
+        Gdk.cairo_set_source_pixbuf(cairo_context, scaled_pixbuf,
+                                    x_offset, y_offset)
+        cairo_context.paint()
 
-def _url( key, data = None ):
-	tail = { 
-			'list'     : "&s=post",
-			'comments' : "&s=comment",
-			}
-	return "http://tbib.org/index.php?page=dapi&json=1" + "&q=index" + tail[ key ] + "&" + str( data )
+    def image_widget_click(self, widget, event_button, data):
+        self.pixbuf.savev(data["image"] + ".png", "png", "", "")
 
-def _image_url( post_data ):
-	return "http://tbib.org//images/" + post_data[ 'directory' ] + '/' + post_data[ 'image' ]
+    def load_image(self):
+        image_data = get_image(self.data)
 
-def _thumbnail_url( post_data ):
-	return "http://tbib.org/thumbnails/" + post_data[ 'directory' ] + '/thumbnail_' + post_data[ 'image' ]
+        pixbuf_loader = GdkPixbuf.PixbufLoader.new()
+        pixbuf_loader.write(image_data)
+
+        pixbuf = pixbuf_loader.get_pixbuf()
+        pixbuf_loader.close()
+
+        if(pixbuf is None):
+            return
+        self.pixbuf = pixbuf
+
+        Gdk.threads_enter()
+        self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
+        self.image_widget.queue_draw()
+        Gdk.threads_leave()
+
+
+def _url(key, data=None):
+    tail = {'list': "&s=post",
+            'comments': "&s=comment"}
+    return "http://tbib.org/index.php?page=dapi&json=1" + \
+           "&q=index" + tail[key] + "&" + str(data)
+
+
+def _image_url(post_data):
+    return "http://tbib.org//images/" + \
+           post_data['directory'] + '/' + post_data['image']
+
+
+def _thumbnail_url(post_data):
+    return "http://tbib.org/thumbnails/" + \
+           post_data['directory'] + '/thumbnail_' + post_data['image']
+
 
 def get_posts():
-	return requests.get( _url( 'list' ) ).json()
+    return requests.get(_url('list')).json()
 
-def get_image( post_data ):
-	return requests.get( _image_url( post_data ) ).content
 
-def get_thumbnail( post_data ):
-	return requests.get( _thumbnail_url( post_data ) ).content
+def get_image(post_data):
+    return requests.get(_image_url(post_data)).content
 
-def search( tags ):
-	tag_string = "tags=" + '+'.join( tags )
-	response   = requests.get( _url( 'list', tag_string ) )
-	result     = []
 
-	if( response.content ):
-		result = response.json()
+def get_thumbnail(post_data):
+    return requests.get(_thumbnail_url(post_data)).content
 
-	return result
+
+def search(tags):
+    tag_string = "tags=" + '+'.join(tags)
+    response = requests.get(_url('list', tag_string))
+    result = []
+
+    if(response.content):
+        result = response.json()
+
+    return result
+
 
 if __name__ == '__main__':
-	app_window = MainWindow()
+    app_window = MainWindow()
 
-	app_window.show_all()
-	app_window.do_search( app_window.search_input )
+    app_window.show_all()
+    app_window.do_search(app_window.search_input)
 
-	Gdk.threads_init()
+    Gdk.threads_init()
 
-	Gdk.threads_enter()
-	Gtk.main()
-	Gdk.threads_leave()
+    Gdk.threads_enter()
+    Gtk.main()
+    Gdk.threads_leave()
