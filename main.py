@@ -260,3 +260,5 @@ if __name__ == '__main__':
     Gdk.threads_enter()
     Gtk.main()
     Gdk.threads_leave()
+    app_window.search_thread.stop()
+    app_window.search_thread.join(0.5)
