@@ -270,7 +270,9 @@ class ImageWindow(Gtk.Window):
         cairo_context.paint()
 
     def image_widget_click(self, widget, event_button, data):
-        self.pixbuf.savev(data["image"] + ".png", "png", "", "")
+        save_thread = Thread(target=self.pixbuf.savev,
+                             args=[data["image"] + ".png", "png", "", ""])
+        save_thread.start()
 
     def load_image(self):
         image_data = get_image(self.data)
