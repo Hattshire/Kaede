@@ -1,8 +1,8 @@
 Kaede
 =====
-Kaede is a Image Board Browser currently supporting only tbib.org
+Kaede is an Image-board browser currently supporting only tbib.org
 
-I made it with the objective to learn a bit of Gtk3 and understanding GUI development
+I made it with the objective of learning a bit of Gtk3 and understanding GUI development
 
 Required packages
 =================
