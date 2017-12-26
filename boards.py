@@ -2,7 +2,7 @@ import requests
 
 
 class BoardProvider():
-    def _url(self, key, data=None):
+    def _url(self, key, data=None, page=0):
         pass
 
     def _image_url(self, post_data):
@@ -20,9 +20,9 @@ class BoardProvider():
     def get_thumbnail(self, post_data):
         return requests.get(self._thumbnail_url(post_data)).content
 
-    def search(self, tags):
+    def search(self, tags, page=0):
         tag_string = "tags=" + '+'.join(tags)
-        response = requests.get(self._url('list', tag_string))
+        response = requests.get(self._url('list', tag_string, page))
         result = []
 
         if(response.content):
@@ -31,11 +31,11 @@ class BoardProvider():
 
 
 class GelbooruProvider(BoardProvider):
-    def _url(self, key, data=None):
+    def _url(self, key, data=None, page=0):
         tail = {'list': "&s=post",
                 'comments': "&s=comment"}
         return "http://gelbooru.com/index.php?page=dapi&json=1" + \
-               "&q=index" + tail[key] + "&" + str(data)
+               "&q=index" + tail[key] + "&" + str(data) + "&pid=" + str(page)
 
     def _image_url(self, post_data):
         url = post_data['file_url']
@@ -49,11 +49,11 @@ class GelbooruProvider(BoardProvider):
 
 
 class TbibProvider(BoardProvider):
-    def _url(self, key, data=None):
+    def _url(self, key, data=None, page=0):
         tail = {'list': "&s=post",
                 'comments': "&s=comment"}
         return "http://tbib.org/index.php?page=dapi&json=1" + \
-               "&q=index" + tail[key] + "&" + str(data)
+               "&q=index" + tail[key] + "&" + str(data) + "&pid=" + str(page)
 
     def _image_url(self, post_data):
         url = "http://tbib.org//images/" + \

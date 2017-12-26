@@ -36,7 +36,7 @@ class SearchThread(Thread):
         self.owner = owner
         self._stop_event = threadingEvent()
 
-    def search(self, tags):
+    def search(self, tags, page=0):
         ratings = []
         for rating in ['safe', 'questionable', 'explicit']:
             if config.get_config(
@@ -45,9 +45,10 @@ class SearchThread(Thread):
                 ratings.append("-rating:" + rating)
 
         self.tags = tags + ratings
+        self.page = page
 
     def run(self):
-        data = boards.TbibProvider().search(self.tags)
+        data = boards.TbibProvider().search(self.tags, self.page)
         for item in data:
             image_data = boards.TbibProvider().get_thumbnail(item)
             if(self.stopped()):
@@ -90,13 +91,15 @@ class MainWindow(Gtk.ApplicationWindow):
         self.add(content)
         self.set_titlebar(headerbar)
 
-        content.connect("scroll-event", self.scrollme)
+        content.connect("scroll-event", self.wall_scroll)
+        content.connect("edge-reached", self.overscroll)
 
         self.thumbnails = {
             'container': self.builder.get_object("window-layout"),
             'last-x': 0,
             'last-y': 0,
-            'data': []
+            'data': [],
+            'page': 0
         }
 
         self.search_input = self.builder.get_object("tag-search-entry")
@@ -129,10 +132,13 @@ class MainWindow(Gtk.ApplicationWindow):
             )
             switch_object.connect("notify::active", self.rating_config)
 
-    def scrollme(self, widget, scroll_event):
+    def wall_scroll(self, widget, scroll_event):
         hadj = widget.get_hadjustment()
-        print(hadj.get_value(), scroll_event.delta_y)
         hadj.set_value(hadj.get_value() + scroll_event.delta_y * 70)
+
+    def overscroll(self, widget, pos):
+        if pos is Gtk.PositionType.RIGHT and not self.search_thread.is_alive():
+            self.do_search(None, True)
 
     def rating_config(self, button, active):
         rating = Gtk.Buildable.get_name(button).split('-')[2]
@@ -178,6 +184,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def clear_layout(self):
         self.thumbnails['last-x'] = 0
         self.thumbnails['last-y'] = 0
+        self.thumbnails['page'] = 0
         self.thumbnails['container'].do_forall(self.thumbnails['container'],
                                                False,
                                                self.remove_callback,
@@ -189,22 +196,24 @@ class MainWindow(Gtk.ApplicationWindow):
     def remove_callback(self, widget, data):
         widget.destroy()
 
-    def do_search(self, widget):
-        self.thumbnails['data'][:] = []
-        if(self.search_thread.ident is not None):
-            if(self.search_thread.is_alive()):
-                self.search_thread.stop()
-                self.search_thread.join(0.5)
+    def do_search(self, widget, new_page=False):
+        if not new_page:
+            self.thumbnails['data'][:] = []
+            if(self.search_thread.ident is not None):
+                if(self.search_thread.is_alive()):
+                    self.search_thread.stop()
+                    self.search_thread.join(0.5)
+            self.clear_layout()
 
-            self.search_thread = SearchThread(self)
-        self.clear_layout()
+        self.search_thread = SearchThread(self)
         if widget is not None:
             self.search_tags = widget.get_text()
         if(self.search_tags):
             self.set_title("Kaede - " + self.search_tags)
-
-        self.search_thread.search(self.search_tags.split(' '))
+        self.search_thread.search(self.search_tags.split(' '),
+                                  self.thumbnails['page'])
         self.search_thread.start()
+        self.thumbnails['page'] += 1
 
 
 class KaedeApplication(Gtk.Application):
