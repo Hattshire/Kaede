@@ -2,6 +2,7 @@
 import gi
 gi.require_version('Gtk', '3.0')
 import requests
+import config
 from gi.repository import Gtk, Gdk, GdkPixbuf
 from threading import Thread, Event as threadingEvent
 
@@ -37,7 +38,14 @@ class SearchThread(Thread):
 
     def search(self, tags):
         self.clear_layout()
-        self.tags = tags
+        ratings = []
+        for rating in ['safe', 'questionable', 'explicit']:
+            if config.get_config(
+                'Search settings', 'Rating ' + rating, "Enable"
+            ) != "Enable":
+                ratings.append("-rating:" + rating)
+
+        self.tags = tags + ratings
 
     def run(self):
         self.add_results(self.results_container, self.tags)
@@ -97,26 +105,60 @@ class SearchThread(Thread):
         widget.destroy()
 
 
-class MainWindow(Gtk.Builder):
-    def __init__(self):
-        super(MainWindow, self).__init__()
+class MainWindow(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super(MainWindow, self).__init__(application=app)
+        self.set_title("Kaede")
 
-        self.add_from_file("main_window_ui.glade")
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file("main_window_layout.glade")
+        self.builder.add_from_file("headerbar_menu.glade")
+        self.builder.add_from_file("headerbar_layout.glade")
 
-        self.window = self.get_object("window1")
-        self.window.set_title("Kaede")
-        self.window.connect('delete-event', Gtk.main_quit)
+        content = self.builder.get_object('window-content')
+        headerbar = self.builder.get_object('main-headerbar')
+        self.add(content)
+        self.set_titlebar(headerbar)
 
-        self.thumbnail_container = self.get_object("layout1")
+        self.thumbnail_container = self.builder.get_object("window-layout")
 
-        self.search_input = self.get_object("entry1")
+        self.search_input = self.builder.get_object("tag-search-entry")
 
         self.search_input.set_icon_from_icon_name(
             Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
 
         self.search_input.connect("activate", self.do_search)
-
+        self.search_tags = None
         self.search_thread = SearchThread(self.thumbnail_container)
+
+        self.config_fields = \
+            {'rating': {
+                'safe':
+                self.builder.get_object("switch-rating-safe"),
+
+                'questionable':
+                self.builder.get_object("switch-rating-questionable"),
+
+                'explicit':
+                self.builder.get_object("switch-rating-explicit")
+            }
+            }
+        for switch_name, switch_object in self.config_fields['rating'].items():
+            rating = switch_name
+            switch_object.set_active(
+                config.get_config(
+                    'Search settings', 'Rating ' + rating, "Enable"
+                ) == "Enable"
+            )
+            switch_object.connect("notify::active", self.rating_config)
+
+    def rating_config(self, button, active):
+        rating = Gtk.Buildable.get_name(button).split('-')[2]
+        if button.get_active():
+            config.set_config('Search settings', 'Rating ' + rating, "Enable")
+        else:
+            config.set_config('Search settings', 'Rating ' + rating, "Disable")
+        self.do_search(None)
 
     def do_search(self, widget):
         if(self.search_thread.ident is not None):
@@ -125,17 +167,34 @@ class MainWindow(Gtk.Builder):
                 self.search_thread.join(0.5)
 
             self.search_thread = SearchThread(self.thumbnail_container)
+        if widget is not None:
+            self.search_tags = widget.get_text()
 
-        search_tags = widget.get_text()
+        if(self.search_tags):
+            self.set_title("Kaede - " + self.search_tags)
 
-        if(search_tags):
-            self.window.set_title("Kaede - " + widget.get_text())
-
-        self.search_thread.search(widget.get_text().split(' '))
+        self.search_thread.search(self.search_tags.split(' '))
         self.search_thread.start()
 
-    def show_all(self):
-        self.window.show_all()
+
+class KaedeApplication(Gtk.Application):
+    def __init__(self):
+        super(KaedeApplication, self).__init__()
+        self.app_window = None
+
+    def do_activate(self):
+        self.app_window = MainWindow(self)
+        self.app_window.show_all()
+        self.app_window.do_search(self.app_window.search_input)
+
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
+
+    def do_shutdown(self):
+        if(self.app_window.search_thread.is_alive()):
+            self.app_window.search_thread.stop()
+            self.app_window.search_thread.join(0.5)
+        Gtk.Application.do_shutdown(self)
 
 
 class ImageWindow(Gtk.Window):
@@ -250,15 +309,7 @@ def search(tags):
 
 
 if __name__ == '__main__':
-    app_window = MainWindow()
-
-    app_window.show_all()
-    app_window.do_search(app_window.search_input)
-
     Gdk.threads_init()
+    app = KaedeApplication()
 
-    Gdk.threads_enter()
-    Gtk.main()
-    Gdk.threads_leave()
-    app_window.search_thread.stop()
-    app_window.search_thread.join(0.5)
+    app.run()
