@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 import gi
 gi.require_version('Gtk', '3.0')
-import requests
 import config
+import boards
 from gi.repository import Gtk, Gdk, GdkPixbuf
 from threading import Thread, Event as threadingEvent
 
@@ -47,9 +47,9 @@ class SearchThread(Thread):
         self.tags = tags + ratings
 
     def run(self):
-        data = search(self.tags)
+        data = boards.tbib_provider().search(self.tags)
         for item in data:
-            image_data = get_thumbnail(item)
+            image_data = boards.tbib_provider().get_thumbnail(item)
             if(self.stopped()):
                 return
 
@@ -275,7 +275,7 @@ class ImageWindow(Gtk.Window):
         save_thread.start()
 
     def load_image(self):
-        image_data = get_image(self.data)
+        image_data = boards.tbib_provider().get_image(self.data)
 
         pixbuf_loader = GdkPixbuf.PixbufLoader.new()
         pixbuf_loader.write(image_data)
@@ -291,46 +291,6 @@ class ImageWindow(Gtk.Window):
         self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
         self.image_widget.queue_draw()
         Gdk.threads_leave()
-
-
-def _url(key, data=None):
-    tail = {'list': "&s=post",
-            'comments': "&s=comment"}
-    return "http://tbib.org/index.php?page=dapi&json=1" + \
-           "&q=index" + tail[key] + "&" + str(data)
-
-
-def _image_url(post_data):
-    return "http://tbib.org//images/" + \
-           post_data['directory'] + '/' + post_data['image']
-
-
-def _thumbnail_url(post_data):
-    return "http://tbib.org/thumbnails/" + \
-           post_data['directory'] + '/thumbnail_' + post_data['image']
-
-
-def get_posts():
-    return requests.get(_url('list')).json()
-
-
-def get_image(post_data):
-    return requests.get(_image_url(post_data)).content
-
-
-def get_thumbnail(post_data):
-    return requests.get(_thumbnail_url(post_data)).content
-
-
-def search(tags):
-    tag_string = "tags=" + '+'.join(tags)
-    response = requests.get(_url('list', tag_string))
-    result = []
-
-    if(response.content):
-        result = response.json()
-
-    return result
 
 
 if __name__ == '__main__':
