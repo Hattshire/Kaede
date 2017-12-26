@@ -7,37 +7,36 @@ from gi.repository import Gtk, Gdk, GdkPixbuf
 from threading import Thread, Event as threadingEvent
 
 
-class ImageWidget(Gtk.EventBox):
+class ThumbnailWidget(Gtk.EventBox):
     ''' Widget for thumbnails '''
 
-    def __init__(self, pixbuf, item_data):
-        super(ImageWidget, self).__init__()
+    def __init__(self, data):
+        super(ThumbnailWidget, self).__init__()
 
-        if(pixbuf is None):
+        if(data['thumbnail_pixbuf'] is None):
             return None
 
-        self.pixbuf = pixbuf
-        self.image = Gtk.Image.new_from_pixbuf(self.pixbuf)
+        self.data = data
+        self.image = Gtk.Image.new_from_pixbuf(self.data['thumbnail_pixbuf'])
         self.image.show()
 
         self.add(self.image)
-        self.connect("button_press_event", self.image_on_click, item_data)
+        self.connect("button_press_event", self.image_on_click, data)
 
     def image_on_click(self, widget, event_button, data):
-        popup_window = ImageWindow(self.pixbuf, data)
+        popup_window = ImageWindow(data)
         popup_window.show_all()
 
 
 class SearchThread(Thread):
     ''' Image search worker '''
 
-    def __init__(self, results_container):
+    def __init__(self, owner):
         super(SearchThread, self).__init__()
-        self.results_container = results_container
+        self.owner = owner
         self._stop_event = threadingEvent()
 
     def search(self, tags):
-        self.clear_layout()
         ratings = []
         for rating in ['safe', 'questionable', 'explicit']:
             if config.get_config(
@@ -48,16 +47,7 @@ class SearchThread(Thread):
         self.tags = tags + ratings
 
     def run(self):
-        self.add_results(self.results_container, self.tags)
-
-    def add_results(self, container, tags):
-        data = search(tags)
-
-        width, height = container.get_size()
-
-        y = 0
-        x = 0
-
+        data = search(self.tags)
         for item in data:
             image_data = get_thumbnail(item)
             if(self.stopped()):
@@ -66,27 +56,14 @@ class SearchThread(Thread):
             pixbuf_loader = GdkPixbuf.PixbufLoader.new()
             pixbuf_loader.write(image_data)
 
-            image_pixbuf = pixbuf_loader.get_pixbuf()
+            item['thumbnail_pixbuf'] = pixbuf_loader.get_pixbuf()
             pixbuf_loader.close()
-            if(image_pixbuf is None):
+
+            if item['thumbnail_pixbuf'] is None:
                 continue
-
-            image_event_widget = ImageWidget(image_pixbuf, item)
-            image_event_widget.show()
-
-            if(y + image_pixbuf.get_height() > height):
-                y = 0
-                x += 160
-
             Gdk.threads_enter()
-            if(x + 160 > width):
-                width += 160
-                container.set_size(width, height)
-
-            container.put(image_event_widget, x, y)
+            self.owner.add_thumbnail(item)
             Gdk.threads_leave()
-
-            y += image_pixbuf.get_height()
 
     def stop(self):
         self._stop_event.set()
@@ -94,21 +71,14 @@ class SearchThread(Thread):
     def stopped(self):
         return self._stop_event.is_set()
 
-    def clear_layout(self):
-        self.results_container.do_forall(self.results_container, False,
-                                         self.remove_callback, None)
-        self.results_container.set_size(
-            self.results_container.get_allocated_width(),
-            self.results_container.get_allocated_height())
-
-    def remove_callback(self, widget, data):
-        widget.destroy()
-
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, app):
         super(MainWindow, self).__init__(application=app)
         self.set_title("Kaede")
+        self.connect("size-allocate", self.update_on_resize)
+
+        self.size = {'height': 0, 'width': 0}
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file("main_window_layout.glade")
@@ -120,7 +90,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.add(content)
         self.set_titlebar(headerbar)
 
-        self.thumbnail_container = self.builder.get_object("window-layout")
+        self.thumbnails = {
+            'container': self.builder.get_object("window-layout"),
+            'last-x': 0,
+            'last-y': 0,
+            'data': []
+        }
 
         self.search_input = self.builder.get_object("tag-search-entry")
 
@@ -129,7 +104,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.search_input.connect("activate", self.do_search)
         self.search_tags = None
-        self.search_thread = SearchThread(self.thumbnail_container)
+        self.search_thread = SearchThread(self)
 
         self.config_fields = \
             {'rating': {
@@ -160,16 +135,63 @@ class MainWindow(Gtk.ApplicationWindow):
             config.set_config('Search settings', 'Rating ' + rating, "Disable")
         self.do_search(None)
 
+    def update_on_resize(self, widget, allocation):
+        if allocation.width != self.size['width']:
+            self.size['width'] = allocation.width
+
+        if allocation.height != self.size['height']:
+            self.size['height'] = allocation.height
+            self.clear_layout()
+            for item in self.thumbnails['data']:
+                self.do_add_thumbnail(item)
+
+    def add_thumbnail(self, data):
+        self.thumbnails['data'].append(data)
+        self.do_add_thumbnail(data)
+
+    def do_add_thumbnail(self, data):
+        pixbuf = data['thumbnail_pixbuf']
+        x = self.thumbnails['last-x']
+        y = self.thumbnails['last-y']
+        width, height = self.thumbnails['container'].get_size()
+
+        if(y + pixbuf.get_height() > height):
+            y = 0
+            x = self.thumbnails['last-x'] = x + 160
+        if(x + 160 > width):
+            width += 160
+            self.thumbnails['container'].set_size(width, height)
+        self.thumbnails['last-y'] = y + pixbuf.get_height()
+
+        thumbnail_widget = ThumbnailWidget(data)
+        thumbnail_widget.show()
+
+        self.thumbnails['container'].put(thumbnail_widget, x, y)
+
+    def clear_layout(self):
+        self.thumbnails['last-x'] = 0
+        self.thumbnails['last-y'] = 0
+        self.thumbnails['container'].do_forall(self.thumbnails['container'],
+                                               False,
+                                               self.remove_callback,
+                                               None)
+        self.thumbnails['container'].set_size(
+            self.thumbnails['container'].get_allocated_width(),
+            self.thumbnails['container'].get_allocated_height())
+
+    def remove_callback(self, widget, data):
+        widget.destroy()
+
     def do_search(self, widget):
         if(self.search_thread.ident is not None):
             if(self.search_thread.is_alive()):
                 self.search_thread.stop()
                 self.search_thread.join(0.5)
 
-            self.search_thread = SearchThread(self.thumbnail_container)
+            self.search_thread = SearchThread(self)
+        self.clear_layout()
         if widget is not None:
             self.search_tags = widget.get_text()
-
         if(self.search_tags):
             self.set_title("Kaede - " + self.search_tags)
 
@@ -200,11 +222,11 @@ class KaedeApplication(Gtk.Application):
 class ImageWindow(Gtk.Window):
     ''' To show the full-size image '''
 
-    def __init__(self, pixbuf=None, data=None):
+    def __init__(self, data):
         super(ImageWindow, self).__init__()
 
-        self.pixbuf = pixbuf
         self.data = data
+        self.pixbuf = data['thumbnail_pixbuf']
         self.set_default_size(data["width"], data["height"])
 
         self.image_widget = Gtk.DrawingArea()
