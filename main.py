@@ -90,6 +90,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.add(content)
         self.set_titlebar(headerbar)
 
+        content.connect("scroll-event", self.scrollme)
+
         self.thumbnails = {
             'container': self.builder.get_object("window-layout"),
             'last-x': 0,
@@ -126,6 +128,11 @@ class MainWindow(Gtk.ApplicationWindow):
                 ) == "Enable"
             )
             switch_object.connect("notify::active", self.rating_config)
+
+    def scrollme(self, widget, scroll_event):
+        hadj = widget.get_hadjustment()
+        print(hadj.get_value(), scroll_event.delta_y)
+        hadj.set_value(hadj.get_value() + scroll_event.delta_y * 70)
 
     def rating_config(self, button, active):
         rating = Gtk.Buildable.get_name(button).split('-')[2]
