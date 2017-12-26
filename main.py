@@ -183,6 +183,7 @@ class MainWindow(Gtk.ApplicationWindow):
         widget.destroy()
 
     def do_search(self, widget):
+        self.thumbnails['data'][:] = []
         if(self.search_thread.ident is not None):
             if(self.search_thread.is_alive()):
                 self.search_thread.stop()
