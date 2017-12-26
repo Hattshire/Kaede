@@ -30,7 +30,7 @@ class BoardProvider():
         return result
 
 
-class gelbooru_provider(BoardProvider):
+class GelbooruProvider(BoardProvider):
     def _url(self, key, data=None):
         tail = {'list': "&s=post",
                 'comments': "&s=comment"}
@@ -48,7 +48,7 @@ class gelbooru_provider(BoardProvider):
         return url
 
 
-class tbib_provider(BoardProvider):
+class TbibProvider(BoardProvider):
     def _url(self, key, data=None):
         tail = {'list': "&s=post",
                 'comments': "&s=comment"}

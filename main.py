@@ -47,9 +47,9 @@ class SearchThread(Thread):
         self.tags = tags + ratings
 
     def run(self):
-        data = boards.tbib_provider().search(self.tags)
+        data = boards.TbibProvider().search(self.tags)
         for item in data:
-            image_data = boards.tbib_provider().get_thumbnail(item)
+            image_data = boards.TbibProvider().get_thumbnail(item)
             if(self.stopped()):
                 return
 
@@ -275,7 +275,7 @@ class ImageWindow(Gtk.Window):
         save_thread.start()
 
     def load_image(self):
-        image_data = boards.tbib_provider().get_image(self.data)
+        image_data = boards.TbibProvider().get_image(self.data)
 
         pixbuf_loader = GdkPixbuf.PixbufLoader.new()
         pixbuf_loader.write(image_data)
