@@ -139,7 +139,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def wall_scroll(self, widget, scroll_event):
         hadj = widget.get_hadjustment()
-        hadj.set_value(hadj.get_value() + scroll_event.delta_y * 70)
+        hadj.set_value(hadj.get_value() +
+                       scroll_event.delta_y * hadj.get_step_increment())
 
     def overscroll(self, widget, pos):
         if pos is Gtk.PositionType.RIGHT and not self.search_thread.is_alive():
