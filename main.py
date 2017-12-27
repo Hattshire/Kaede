@@ -82,9 +82,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.size = {'height': 0, 'width': 0}
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("main_window_layout.glade")
-        self.builder.add_from_file("headerbar_menu.glade")
-        self.builder.add_from_file("headerbar_layout.glade")
+        self.builder.add_from_file("ui/main_window_layout.glade")
+        self.builder.add_from_file("ui/headerbar_menu.glade")
+        self.builder.add_from_file("ui/headerbar_layout.glade")
 
         content = self.builder.get_object('window-content')
         headerbar = self.builder.get_object('main-headerbar')
