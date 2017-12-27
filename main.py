@@ -256,11 +256,7 @@ class ImageWindow(Gtk.Window):
         self.connect("button_press_event", self.image_widget_click, self.data)
 
         self.add(self.image_widget_container)
-
-        if(data):
-            self.set_title(data['tags'])
-        else:
-            self.set_title("Image")
+        self.set_title("Image")
 
         Thread(target=self.load_image).start()
 
