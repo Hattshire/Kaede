@@ -178,8 +178,8 @@ class MainWindow(Gtk.ApplicationWindow):
         thumbnail_widget = ThumbnailWidget(data)
         thumbnail_widget.show()
         thumb_width, thumb_height = thumbnail_widget.get_size()
-        thumb_offset = {'x': (160 % thumb_width) // 2,
-                        'y': (160 % thumb_height) // 2}
+        thumb_offset = {'x': (160 - thumb_width) // 2,
+                        'y': (160 - thumb_height) // 2}
 
         if(y + 160 > height):
             y = 0
