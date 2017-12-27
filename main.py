@@ -166,8 +166,12 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.do_add_thumbnail(item)
 
     def add_thumbnail(self, data):
-        self.thumbnails['data'].append(data)
-        self.do_add_thumbnail(data)
+        # Add the thumbnail only if it wasn't added before
+        # to prevent repeated results
+        if not [thumb for
+                thumb in self.thumbnails['data'] if thumb["id"] == data["id"]]:
+            self.thumbnails['data'].append(data)
+            self.do_add_thumbnail(data)
 
     def do_add_thumbnail(self, data):
         x = self.thumbnails['last-x']
