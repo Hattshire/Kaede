@@ -27,6 +27,10 @@ class ThumbnailWidget(Gtk.EventBox):
         popup_window = ImageWindow(data)
         popup_window.show_all()
 
+    def get_size(self):
+        return self.data['thumbnail_pixbuf'].get_width(), \
+            self.data['thumbnail_pixbuf'].get_height()
+
 
 class SearchThread(Thread):
     ''' Image search worker '''
@@ -98,6 +102,7 @@ class MainWindow(Gtk.ApplicationWindow):
             'container': self.builder.get_object("window-layout"),
             'last-x': 0,
             'last-y': 0,
+            'y-offset': 0,
             'data': [],
             'page': 0
         }
@@ -155,6 +160,8 @@ class MainWindow(Gtk.ApplicationWindow):
         if allocation.height != self.size['height']:
             self.size['height'] = allocation.height
             self.clear_layout()
+            self.thumbnails['y-offset'] = \
+                (self.thumbnails['container'].get_size().height % 160) // 2
             for item in self.thumbnails['data']:
                 self.do_add_thumbnail(item)
 
@@ -163,23 +170,29 @@ class MainWindow(Gtk.ApplicationWindow):
         self.do_add_thumbnail(data)
 
     def do_add_thumbnail(self, data):
-        pixbuf = data['thumbnail_pixbuf']
         x = self.thumbnails['last-x']
         y = self.thumbnails['last-y']
+
         width, height = self.thumbnails['container'].get_size()
 
-        if(y + pixbuf.get_height() > height):
+        thumbnail_widget = ThumbnailWidget(data)
+        thumbnail_widget.show()
+        thumb_width, thumb_height = thumbnail_widget.get_size()
+        thumb_offset = {'x': (160 % thumb_width) // 2,
+                        'y': (160 % thumb_height) // 2}
+
+        if(y + 160 > height):
             y = 0
             x = self.thumbnails['last-x'] = x + 160
         if(x + 160 > width):
             width += 160
             self.thumbnails['container'].set_size(width, height)
-        self.thumbnails['last-y'] = y + pixbuf.get_height()
-
-        thumbnail_widget = ThumbnailWidget(data)
-        thumbnail_widget.show()
-
-        self.thumbnails['container'].put(thumbnail_widget, x, y)
+        if y == 0:
+            y = self.thumbnails['y-offset']
+        self.thumbnails['last-y'] = y + 160
+        self.thumbnails['container'].put(thumbnail_widget,
+                                         x + thumb_offset['x'],
+                                         y + thumb_offset['y'])
 
     def clear_layout(self):
         self.thumbnails['last-x'] = 0
