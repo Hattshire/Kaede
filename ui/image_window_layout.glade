@@ -37,7 +37,7 @@
             <property name="halign">center</property>
             <property name="hexpand">True</property>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="button-prev">
                 <property name="label">gtk-go-back</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -65,7 +65,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="button-next">
                 <property name="label">gtk-go-forward</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

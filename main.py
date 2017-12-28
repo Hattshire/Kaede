@@ -21,10 +21,9 @@ class ThumbnailWidget(Gtk.EventBox):
         self.image.show()
 
         self.add(self.image)
-        self.connect("button_press_event", self.image_on_click, data)
 
-    def image_on_click(self, widget, event_button, data):
-        popup_window = ImageWindow(data)
+    def image_on_click(self, widget, event_button, parent_window):
+        popup_window = ImageWindow(self.data, parent_window)
         popup_window.show_all()
 
     def get_size(self):
@@ -180,7 +179,10 @@ class MainWindow(Gtk.ApplicationWindow):
 
         width, height = self.thumbnails['container'].get_size()
 
-        thumbnail_widget = ThumbnailWidget(data)
+        thumbnail_widget = ThumbnailWidget(data=data)
+        thumbnail_widget.connect("button_press_event",
+                                 thumbnail_widget.image_on_click,
+                                 self)
         thumbnail_widget.show()
         thumb_width, thumb_height = thumbnail_widget.get_size()
         thumb_offset = {'x': (160 - thumb_width) // 2,
@@ -257,22 +259,25 @@ class KaedeApplication(Gtk.Application):
 class ImageWindow(Gtk.Window):
     ''' To show the full-size image '''
 
-    def __init__(self, data):
+    def __init__(self, data, parent_window=None):
         super(ImageWindow, self).__init__()
         self.builder = Gtk.Builder\
                           .new_from_file("ui/image_window_layout.glade")
+        self.data = data
+        self.pixbuf = data['thumbnail_pixbuf']
+        self.parent_window = parent_window
 
         self.content = self.builder.get_object('window-content')
         self.headerbar = self.builder.get_object('image-headerbar')
         self.image_widget = self.builder.get_object('image-container')
 
-        self.close_button = self.builder.get_object('button-close')
         self.save_button = self.builder.get_object('button-save')
+        self.prev_button = self.builder.get_object('button-prev')
+        self.next_button = self.builder.get_object('button-next')
+        self.close_button = self.builder.get_object('button-close')
 
         self.add(self.content)
         self.set_titlebar(self.headerbar)
-        self.data = data
-        self.pixbuf = data['thumbnail_pixbuf']
 
         self.set_title(data['tags'])
 
@@ -297,19 +302,55 @@ class ImageWindow(Gtk.Window):
 
         self.set_default_size(width, height)
 
-        self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
+        self.image_widget.connect("draw", self.image_widget_draw)
 
-        self.close_button.connect('clicked', self.close_window)
         self.save_button.connect('clicked', self.save_image, self.data)
+        self.close_button.connect('clicked', self.close_window)
 
-        Thread(target=self.load_image).start()
+        if self.parent_window is None:
+            self.prev_button.destroy()
+            self.next_button.destroy()
+        else:
+            self.prev_button.connect('clicked', self.prev_image)
+            self.next_button.connect('clicked', self.next_image)
+
+        self.load_thread = Thread(target=self.load_image)
+        self.load_thread.start()
 
     def close_window(self, widget):
         self.close()
 
-    def image_widget_draw(self, widget, cairo_context, pixbuf):
+    def next_image(self, widget):
+        self.load_thread = Thread(target=self.load_image)
+        self.load_thread.start()
+        data = [thumb
+                for thumb in self.parent_window.thumbnails['data']
+                if thumb["id"] > self.data["id"]]
+        if data:
+            self.data = data[-1]
+        else:
+            return False
+        self.pixbuf = self.data['thumbnail_pixbuf']
+        self.image_widget.queue_draw()
+
+    def prev_image(self, widget):
+        self.load_thread = Thread(target=self.load_image)
+        self.load_thread.start()
+        data = [thumb
+                for thumb in self.parent_window.thumbnails['data']
+                if thumb["id"] < self.data["id"]]
+        if data:
+            self.data = data[0]
+        else:
+            return False
+        self.pixbuf = self.data['thumbnail_pixbuf']
+        self.image_widget.queue_draw()
+
+    def image_widget_draw(self, widget, cairo_context):
         width = widget.get_allocated_width()
         height = widget.get_allocated_height()
+
+        pixbuf = self.pixbuf
 
         if (width / height > pixbuf.get_width() / pixbuf.get_height()):
             width = (height / pixbuf.get_height()) * pixbuf.get_width()
@@ -347,7 +388,6 @@ class ImageWindow(Gtk.Window):
         self.pixbuf = pixbuf
 
         Gdk.threads_enter()
-        self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
         self.image_widget.queue_draw()
         Gdk.threads_leave()
 
