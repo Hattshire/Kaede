@@ -3,8 +3,8 @@ import gi
 gi.require_version('Gtk', '3.0')
 import config
 import boards
+import threads
 from gi.repository import Gtk, Gdk, GdkPixbuf
-from threading import Thread, Event as threadingEvent
 
 
 class ThumbnailWidget(Gtk.EventBox):
@@ -29,51 +29,6 @@ class ThumbnailWidget(Gtk.EventBox):
     def get_size(self):
         return self.data['thumbnail_pixbuf'].get_width(), \
             self.data['thumbnail_pixbuf'].get_height()
-
-
-class SearchThread(Thread):
-    ''' Image search worker '''
-
-    def __init__(self, owner):
-        super(SearchThread, self).__init__()
-        self.owner = owner
-        self._stop_event = threadingEvent()
-
-    def search(self, tags, page=0):
-        ratings = []
-        for rating in ['safe', 'questionable', 'explicit']:
-            if config.get_config(
-                'Search settings', 'Rating ' + rating, "Enable"
-            ) != "Enable":
-                ratings.append("-rating:" + rating)
-
-        self.tags = tags + ratings
-        self.page = page
-
-    def run(self):
-        data = boards.TbibProvider().search(self.tags, self.page)
-        for item in data:
-            image_data = boards.TbibProvider().get_thumbnail(item)
-            if(self.stopped()):
-                return
-
-            pixbuf_loader = GdkPixbuf.PixbufLoader.new()
-            pixbuf_loader.write(image_data)
-
-            item['thumbnail_pixbuf'] = pixbuf_loader.get_pixbuf()
-            pixbuf_loader.close()
-
-            if item['thumbnail_pixbuf'] is None:
-                continue
-            Gdk.threads_enter()
-            self.owner.add_thumbnail(item)
-            Gdk.threads_leave()
-
-    def stop(self):
-        self._stop_event.set()
-
-    def stopped(self):
-        return self._stop_event.is_set()
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -113,7 +68,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.search_input.connect("activate", self.do_search)
         self.search_tags = None
-        self.search_thread = SearchThread(self)
+        self.search_thread = threads.SearchThread(self)
 
         self.config_fields = \
             {'rating': {
@@ -225,7 +180,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.search_thread.join(0.5)
             self.clear_layout()
 
-        self.search_thread = SearchThread(self)
+        self.search_thread = threads.SearchThread(self)
         if widget is not None:
             self.search_tags = widget.get_text()
         if(self.search_tags):
@@ -314,14 +269,14 @@ class ImageWindow(Gtk.Window):
             self.prev_button.connect('clicked', self.prev_image)
             self.next_button.connect('clicked', self.next_image)
 
-        self.load_thread = Thread(target=self.load_image)
+        self.load_thread = threads.StopableThread(target=self.load_image)
         self.load_thread.start()
 
     def close_window(self, widget):
         self.close()
 
     def next_image(self, widget):
-        self.load_thread = Thread(target=self.load_image)
+        self.load_thread = threads.StopableThread(target=self.load_image)
         self.load_thread.start()
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
@@ -334,7 +289,7 @@ class ImageWindow(Gtk.Window):
         self.image_widget.queue_draw()
 
     def prev_image(self, widget):
-        self.load_thread = Thread(target=self.load_image)
+        self.load_thread = threads.StopableThread(target=self.load_image)
         self.load_thread.start()
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
@@ -370,8 +325,9 @@ class ImageWindow(Gtk.Window):
         cairo_context.paint()
 
     def save_image(self, widget, data):
-        save_thread = Thread(target=self.pixbuf.savev,
-                             args=[data["image"] + ".png", "png", "", ""])
+        save_thread = threads.StopableThread(target=self.pixbuf.savev,
+                                             args=[data["image"] + ".png",
+                                                   "png", "", ""])
         save_thread.start()
 
     def load_image(self):
