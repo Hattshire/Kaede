@@ -259,24 +259,53 @@ class ImageWindow(Gtk.Window):
 
     def __init__(self, data):
         super(ImageWindow, self).__init__()
+        self.builder = Gtk.Builder\
+                          .new_from_file("ui/image_window_layout.glade")
 
+        self.content = self.builder.get_object('window-content')
+        self.headerbar = self.builder.get_object('image-headerbar')
+        self.image_widget = self.builder.get_object('image-container')
+
+        self.close_button = self.builder.get_object('button-close')
+        self.save_button = self.builder.get_object('button-save')
+
+        self.add(self.content)
+        self.set_titlebar(self.headerbar)
         self.data = data
         self.pixbuf = data['thumbnail_pixbuf']
-        self.set_default_size(data["width"], data["height"])
 
-        self.image_widget = Gtk.DrawingArea()
-        self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
-        self.image_widget.set_hexpand(True)
-        self.image_widget.set_vexpand(True)
-
-        self.image_widget_container = Gtk.Grid()
-        self.image_widget_container.attach(self.image_widget, 0, 0, 1, 1)
-        self.connect("button_press_event", self.image_widget_click, self.data)
-
-        self.add(self.image_widget_container)
         self.set_title(data['tags'])
 
+        # Set window size proportionally to the image
+        screen = self.get_screen()
+        max_width, max_height = screen.get_width(), screen.get_height()
+
+        if max_width < data['width']:
+            width = max_width
+        else:
+            width = data['width']
+
+        if max_height < data['height']:
+            height = max_height
+        else:
+            height = data['height']
+
+        if (width / height > data['width'] / data['height']):
+            width = (height / data['height']) * data['width']
+        elif(width / height < data['width'] / data['height']):
+            height = (width / data['width']) * data['height']
+
+        self.set_default_size(width, height)
+
+        self.image_widget.connect("draw", self.image_widget_draw, self.pixbuf)
+
+        self.close_button.connect('clicked', self.close_window)
+        self.save_button.connect('clicked', self.save_image, self.data)
+
         Thread(target=self.load_image).start()
+
+    def close_window(self, widget):
+        self.close()
 
     def image_widget_draw(self, widget, cairo_context, pixbuf):
         width = widget.get_allocated_width()
@@ -299,7 +328,7 @@ class ImageWindow(Gtk.Window):
                                     x_offset, y_offset)
         cairo_context.paint()
 
-    def image_widget_click(self, widget, event_button, data):
+    def save_image(self, widget, data):
         save_thread = Thread(target=self.pixbuf.savev,
                              args=[data["image"] + ".png", "png", "", ""])
         save_thread.start()
