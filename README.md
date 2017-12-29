@@ -1,5 +1,7 @@
 Kaede
 =====
+[![Build Status](https://travis-ci.org/Hattshire/Kaede.svg?branch=master)](https://travis-ci.org/Hattshire/Kaede) [![Coverage Status](https://coveralls.io/repos/github/Hattshire/Kaede/badge.svg?branch=master)](https://coveralls.io/github/Hattshire/Kaede?branch=master)
+
 Kaede is an Image-board browser currently supporting only tbib.org
 
 I made it with the objective of learning a bit of Gtk3 and understanding GUI development
