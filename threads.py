@@ -8,13 +8,13 @@ import boards
 
 
 class StopableThread(Thread):
-
     def __init__(self, group=None, target=None, name=None,
-                 args=(), kwargs={}, *, daemon=None):
+                 args=(), kwargs={}, *, daemon=None, owner=None):
         super(StopableThread, self).__init__(group=group, target=target,
                                              name=name, args=args,
                                              kwargs=kwargs, daemon=daemon)
         self._stop_event = threadingEvent()
+        self.owner = owner
 
     def stop(self):
         self._stop_event.set()
@@ -27,8 +27,7 @@ class SearchThread(StopableThread):
     ''' Image search worker '''
 
     def __init__(self, owner):
-        super(SearchThread, self).__init__(target=self.run)
-        self.owner = owner
+        super(SearchThread, self).__init__(target=self.run, owner=owner)
 
     def search(self, tags, page=0):
         ratings = []
@@ -58,4 +57,23 @@ class SearchThread(StopableThread):
                 continue
             Gdk.threads_enter()
             self.owner.add_thumbnail(item)
+            Gdk.threads_leave()
+
+
+class ImageLoadThread(StopableThread):
+    def run(self):
+        image_data = boards.TbibProvider().get_image(self.owner.data)
+        if not self.stopped():
+            pixbuf_loader = GdkPixbuf.PixbufLoader.new()
+            pixbuf_loader.write(image_data)
+
+            pixbuf = pixbuf_loader.get_pixbuf()
+            pixbuf_loader.close()
+
+            if pixbuf is None:
+                return
+            self.owner.pixbuf = pixbuf
+
+            Gdk.threads_enter()
+            self.owner.image_widget.queue_draw()
             Gdk.threads_leave()

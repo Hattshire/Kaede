@@ -269,15 +269,14 @@ class ImageWindow(Gtk.Window):
             self.prev_button.connect('clicked', self.prev_image)
             self.next_button.connect('clicked', self.next_image)
 
-        self.load_thread = threads.StopableThread(target=self.load_image)
-        self.load_thread.start()
+        self.loader = threads.ImageLoadThread(self)
+        self.loader.start()
 
     def close_window(self, widget):
         self.close()
 
     def next_image(self, widget):
-        self.load_thread = threads.StopableThread(target=self.load_image)
-        self.load_thread.start()
+        self.loader.stop()
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
                 if thumb["id"] > self.data["id"]]
@@ -287,10 +286,11 @@ class ImageWindow(Gtk.Window):
             return False
         self.pixbuf = self.data['thumbnail_pixbuf']
         self.image_widget.queue_draw()
+        self.loader = threads.ImageLoadThread(self)
+        self.loader.start()
 
     def prev_image(self, widget):
-        self.load_thread = threads.StopableThread(target=self.load_image)
-        self.load_thread.start()
+        self.loader.stop()
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
                 if thumb["id"] < self.data["id"]]
@@ -300,6 +300,8 @@ class ImageWindow(Gtk.Window):
             return False
         self.pixbuf = self.data['thumbnail_pixbuf']
         self.image_widget.queue_draw()
+        self.loader = threads.ImageLoadThread(self)
+        self.loader.start()
 
     def image_widget_draw(self, widget, cairo_context):
         width = widget.get_allocated_width()
@@ -329,23 +331,6 @@ class ImageWindow(Gtk.Window):
                                              args=[data["image"] + ".png",
                                                    "png", "", ""])
         save_thread.start()
-
-    def load_image(self):
-        image_data = boards.TbibProvider().get_image(self.data)
-
-        pixbuf_loader = GdkPixbuf.PixbufLoader.new()
-        pixbuf_loader.write(image_data)
-
-        pixbuf = pixbuf_loader.get_pixbuf()
-        pixbuf_loader.close()
-
-        if(pixbuf is None):
-            return
-        self.pixbuf = pixbuf
-
-        Gdk.threads_enter()
-        self.image_widget.queue_draw()
-        Gdk.threads_leave()
 
 
 if __name__ == '__main__':
