@@ -269,28 +269,28 @@ class ImageWindow(Gtk.Window):
             self.prev_button.connect('clicked', self.prev_image)
             self.next_button.connect('clicked', self.next_image)
 
-        self.loader = threads.ImageLoadThread(self)
+        self.loader = threads.ImageLoadThread(owner=self)
         self.loader.start()
 
     def close_window(self, widget):
         self.close()
 
     def next_image(self, widget):
-        self.loader.stop()
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
                 if thumb["id"] > self.data["id"]]
         if data:
             self.data = data[-1]
+            print(data)
         else:
             return False
         self.pixbuf = self.data['thumbnail_pixbuf']
         self.image_widget.queue_draw()
-        self.loader = threads.ImageLoadThread(self)
+        self.loader.stop()
+        self.loader = threads.ImageLoadThread(owner=self)
         self.loader.start()
 
     def prev_image(self, widget):
-        self.loader.stop()
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
                 if thumb["id"] < self.data["id"]]
@@ -300,7 +300,8 @@ class ImageWindow(Gtk.Window):
             return False
         self.pixbuf = self.data['thumbnail_pixbuf']
         self.image_widget.queue_draw()
-        self.loader = threads.ImageLoadThread(self)
+        self.loader.stop()
+        self.loader = threads.ImageLoadThread(owner=self)
         self.loader.start()
 
     def image_widget_draw(self, widget, cairo_context):
