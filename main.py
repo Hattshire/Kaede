@@ -281,7 +281,6 @@ class ImageWindow(Gtk.Window):
                 if thumb["id"] > self.data["id"]]
         if data:
             self.data = data[-1]
-            print(data)
         else:
             return False
         self.pixbuf = self.data['thumbnail_pixbuf']
