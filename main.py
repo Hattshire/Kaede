@@ -1,10 +1,11 @@
 #!/usr/bin/python3
+import os
 import gi
-gi.require_version('Gtk', '3.0')
+import errno
 import config
-import boards
 import threads
-from gi.repository import Gtk, Gdk, GdkPixbuf
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 
 
 class ThumbnailWidget(Gtk.EventBox):
@@ -80,6 +81,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
                 'explicit':
                 self.builder.get_object("switch-rating-explicit")
+            },
+             'downloads': {
+                'path': self.builder.get_object("button-download-path")
             }
             }
         for switch_name, switch_object in self.config_fields['rating'].items():
@@ -90,6 +94,19 @@ class MainWindow(Gtk.ApplicationWindow):
                 ) == "Enable"
             )
             switch_object.connect("notify::active", self.rating_config)
+
+        self.config_fields['downloads']['path']\
+            .set_current_folder(config.get_config('Download settings',
+                                                  'Save dir',
+                                                  config.default_save_dir))
+        self.config_fields['downloads']['path']\
+            .connect("file-set", self.set_download_path)
+
+    def set_download_path(self, widget):
+        folder = widget.get_current_folder()
+        config.set_config('Download settings',
+                          'Save dir',
+                          folder)
 
     def wall_scroll(self, widget, scroll_event):
         hadj = widget.get_hadjustment()
@@ -327,9 +344,12 @@ class ImageWindow(Gtk.Window):
         cairo_context.paint()
 
     def save_image(self, widget, data):
-        save_thread = threads.StopableThread(target=self.pixbuf.savev,
-                                             args=[data["image"] + ".png",
-                                                   "png", "", ""])
+        default_save_dir = os.path.join(os.path.expanduser("~"), "Pictures")
+        save_dir = config.get_config('Download settings', 'Save dir',
+                                     default_save_dir)
+        image_save_path = os.path.join(save_dir, data["image"])
+        save_thread = threads.SaveImageThread(path=image_save_path,
+                                              pixbuf=self.pixbuf)
         save_thread.start()
 
 

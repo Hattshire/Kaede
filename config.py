@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from gi.repository import GLib
 from appdirs import AppDirs
 from configparser import ConfigParser
 import os
@@ -12,6 +13,10 @@ CONFIG_FILENAME = "config.ini"
 dirs = AppDirs(APP_NAME, APP_AUTHOR, version=CONFIG_VERSION)
 file_path = os.path.join(dirs.user_config_dir, CONFIG_FILENAME)
 config = ConfigParser()
+
+default_save_dir = GLib.get_user_special_dir(GLib.USER_DIRECTORY_PICTURES)
+if default_save_dir is None:
+    default_save_dir = os.path.join(os.path.expanduser("~"), "Pictures")
 
 if not os.path.exists(file_path):
     if not os.path.exists(dirs.user_config_dir):
@@ -27,6 +32,8 @@ if not os.path.exists(file_path):
     config['Search settings']['Rating safe'] = "Enabled"
     config['Search settings']['Rating questionable'] = "Enabled"
     config['Search settings']['Rating explicit'] = "Enabled"
+    config['Download settings'] = {}
+    config['Download settings']['Save dir'] = default_save_dir
 
     config.write(_file)
 

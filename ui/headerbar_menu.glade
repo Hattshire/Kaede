@@ -40,6 +40,19 @@
             <property name="visible">True</property>
             <property name="menu-name">ratings-menu</property>
             <property name="text">Shown ratings</property>
+            <property name="menu_name">ratings-menu</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFileChooserButton" id="button-download-path">
+            <property name="visible">True</property>
+            <property name="action">GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER</property>
           </object>
         </child>
       </object>

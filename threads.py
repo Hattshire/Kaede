@@ -1,10 +1,12 @@
 #!/usr/bin/python3
-from threading import Thread, Event as threadingEvent
-import gi
-gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk, GdkPixbuf
 import config
 import boards
+import errno
+from threading import Thread, Event as threadingEvent
+import os
+import gi
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gdk, GdkPixbuf, GLib
 
 
 class StopableThread(Thread):
@@ -77,3 +79,33 @@ class ImageLoadThread(StopableThread):
             Gdk.threads_enter()
             self.owner.image_widget.queue_draw()
             Gdk.threads_leave()
+
+
+class SaveImageThread(StopableThread):
+    def __init__(self, *args, path, pixbuf):
+        super(SaveImageThread, self).__init__(*args)
+        self.path = path
+        self.pixbuf = pixbuf
+
+    def run(self):
+        image_save_format = self.path.split('.')[-1]
+        if image_save_format == "jpg":
+            image_save_format = "jpeg"
+        save_dir = os.path.dirname(self.path)
+
+        if not os.path.exists(save_dir):
+            try:
+                os.makedirs(save_dir)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
+
+        try:
+            self.pixbuf.savev(self.path, image_save_format, "", "")
+        except GLib.GError as exception:
+            if exception.code == GdkPixbuf.PixbufError.UNSUPPORTED_OPERATION:
+                print("Saving animations is currently unsupported, " +
+                      "saving as PNG instead.")
+                self.pixbuf.savev(self.path + '.png', "png", "", "")
+            else:
+                raise
