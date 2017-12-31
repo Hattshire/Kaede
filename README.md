@@ -15,6 +15,14 @@ Kaede uses the following:
 * Pillow
 * Gtk 3.0 (tested with v3.22.26)
 
+TODO
+=====
+* Support animations, at least GIF
+* Package
+* Add tests
+* Add settings dialog
+* Support several boards
+
 License
 =======
 This software is licensed under the law and order of GPLv3
