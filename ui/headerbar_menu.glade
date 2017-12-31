@@ -50,6 +50,12 @@
           </object>
         </child>
         <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="label">Download Folder</property>
+          </object>
+        </child>
+        <child>
           <object class="GtkFileChooserButton" id="button-download-path">
             <property name="visible">True</property>
             <property name="action">GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER</property>
