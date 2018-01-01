@@ -43,6 +43,13 @@ else:
 
 
 def set_config(section, key, value):
+    """Save a setting.
+
+    Args:
+        section (str): Config section.
+        key (str): Config key.
+        value (*): Saved value
+    """
     if section not in config:
         config[section] = {}
     config[section][key] = value
@@ -53,6 +60,13 @@ def set_config(section, key, value):
 
 
 def get_config(section, key, default_value=None):
+    """Retrieve a setting.
+
+    Args:
+        section (str): Config section.
+        key (str): Config key.
+        default_value (*): Returned value when no setting was previously set.
+    """
     if section not in config or key not in config[section]:
         value = default_value
     else:

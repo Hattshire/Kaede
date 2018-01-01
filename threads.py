@@ -10,8 +10,11 @@ from gi.repository import Gdk, GdkPixbuf, GLib
 
 
 class StopableThread(Thread):
+    """A thread with stop capabilities."""
+
     def __init__(self, group=None, target=None, name=None,
                  args=(), kwargs={}, *, daemon=None, owner=None):
+        """Init function."""
         super(StopableThread, self).__init__(group=group, target=target,
                                              name=name, args=args,
                                              kwargs=kwargs, daemon=daemon)
@@ -19,19 +22,32 @@ class StopableThread(Thread):
         self.owner = owner
 
     def stop(self):
+        """Send a stop event so it doesn't change anything."""
         self._stop_event.set()
 
     def stopped(self):
+        """Check if the thread needs to stop."""
         return self._stop_event.is_set()
 
 
 class SearchThread(StopableThread):
-    ''' Image search worker '''
+    """Image search worker."""
 
     def __init__(self, owner):
+        """Init function.
+
+        Args:
+            owner (Gtk.Widget): Thread owner.
+        """
         super(SearchThread, self).__init__(target=self.run, owner=owner)
 
     def search(self, tags, page=0):
+        """Prepare thread before searching.
+
+        Args:
+            tags (list): tag list.
+            page (int): page num.
+        """
         ratings = []
         for rating in ['safe', 'questionable', 'explicit']:
             if config.get_config(
@@ -43,6 +59,7 @@ class SearchThread(StopableThread):
         self.page = page
 
     def run(self):
+        """Work on what this was made for."""
         data = boards.TbibProvider().search(self.tags, self.page)
         for item in data:
             image_data = boards.TbibProvider().get_thumbnail(item)
@@ -63,7 +80,10 @@ class SearchThread(StopableThread):
 
 
 class ImageLoadThread(StopableThread):
+    """Thread for loading images."""
+
     def run(self):
+        """Do da work."""
         image_data = boards.TbibProvider().get_image(self.owner.data)
         if not self.stopped():
             pixbuf_loader = GdkPixbuf.PixbufLoader.new()
@@ -82,12 +102,21 @@ class ImageLoadThread(StopableThread):
 
 
 class SaveImageThread(StopableThread):
+    """Thread for saving a GdkPixbuf to disk."""
+
     def __init__(self, *args, path, pixbuf):
+        """Init function.
+
+        Args:
+            path (str): Where to save the pixbuf
+            pixbuf (GdkPixbuf.Pixbuf): Image to save.
+        """
         super(SaveImageThread, self).__init__(*args)
         self.path = path
         self.pixbuf = pixbuf
 
     def run(self):
+        """Begin to Work."""
         image_save_format = self.path.split('.')[-1]
         if image_save_format == "jpg":
             image_save_format = "jpeg"

@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import os
 import gi
-import errno
 import config
 import threads
 gi.require_version('Gtk', '3.0')
@@ -9,9 +8,14 @@ from gi.repository import Gtk, Gdk, GdkPixbuf
 
 
 class ThumbnailWidget(Gtk.EventBox):
-    ''' Widget for thumbnails '''
+    """Widget for thumbnails."""
 
     def __init__(self, data):
+        """Init function.
+
+        Args:
+            data (dict): Image data.
+        """
         super(ThumbnailWidget, self).__init__()
 
         if(data['thumbnail_pixbuf'] is None):
@@ -24,16 +28,31 @@ class ThumbnailWidget(Gtk.EventBox):
         self.add(self.image)
 
     def image_on_click(self, widget, event_button, parent_window):
+        """Handle clicks on the thumbnail.
+
+        Args:
+            widget (Gtk.Widget): Signal receiver.
+            event_button (Gtk.EventButton): Button pressed.
+            parent_window (Gtk.Window): Window holding the images data.
+        """
         popup_window = ImageWindow(self.data, parent_window)
         popup_window.show_all()
 
     def get_size(self):
+        """Return the thumbnail size."""
         return self.data['thumbnail_pixbuf'].get_width(), \
             self.data['thumbnail_pixbuf'].get_height()
 
 
 class MainWindow(Gtk.ApplicationWindow):
+    """Main window class."""
+
     def __init__(self, app):
+        """Init function.
+
+        Args:
+            app (Gtk.Application): The application.
+        """
         super(MainWindow, self).__init__(application=app)
         self.set_title("Kaede")
         self.connect("size-allocate", self.update_on_resize)
@@ -103,21 +122,44 @@ class MainWindow(Gtk.ApplicationWindow):
             .connect("file-set", self.set_download_path)
 
     def set_download_path(self, widget):
+        """Handle download folder setting changes.
+
+        Args:
+            widget (Gtk.FileChooser): Signal receiver.
+        """
         folder = widget.get_current_folder()
         config.set_config('Download settings',
                           'Save dir',
                           folder)
 
     def wall_scroll(self, widget, scroll_event):
+        """Handle scrolling events so it works with the mouse wheel.
+
+        Args:
+            widget (Gtk.Widget): Signal receiver.
+            scroll_event (Gdk.ScrollEvent): Scroll displacement.
+        """
         hadj = widget.get_hadjustment()
         hadj.set_value(hadj.get_value() +
                        scroll_event.delta_y * hadj.get_step_increment())
 
     def overscroll(self, widget, pos):
+        """Handle edge reaching so we can do some sort of infinite scroll.
+
+        Args:
+            widget (Gtk.ScrolledWindow): Signal receiver.
+            pos (Gtk.PositionType): Edge side reached.
+        """
         if pos is Gtk.PositionType.RIGHT and not self.search_thread.is_alive():
             self.do_search(None, True)
 
     def rating_config(self, button, active):
+        """Handle rating preference changes.
+
+        Args:
+            button (Gtk.Switch): Signal receiver.
+            active (GObject.ParamSpec): New state of the switch.
+        """
         rating = Gtk.Buildable.get_name(button).split('-')[2]
         if button.get_active():
             config.set_config('Search settings', 'Rating ' + rating, "Enable")
@@ -126,6 +168,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.do_search(None)
 
     def update_on_resize(self, widget, allocation):
+        """Handle resizing so we can adjust the wall container limits and size.
+
+        Args:
+            widget (Gtk.Window): Signal receiver.
+            allocation (Gdk.Rectangle): New size allocation.
+        """
         if allocation.width != self.size['width']:
             self.size['width'] = allocation.width
 
@@ -138,14 +186,25 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.do_add_thumbnail(item)
 
     def add_thumbnail(self, data):
-        # Add the thumbnail only if it wasn't added before
-        # to prevent repeated results
+        """Append the thumbnail to the wall.
+
+         Add the thumbnail only if it wasn't added before
+         to prevent repeated results
+
+        Args:
+            data (dict): Image/thumbnail information.
+        """
         if not [thumb for
                 thumb in self.thumbnails['data'] if thumb["id"] == data["id"]]:
             self.thumbnails['data'].append(data)
             self.do_add_thumbnail(data)
 
     def do_add_thumbnail(self, data):
+        """Efectively add the thumbnail to the wall.
+
+        Args:
+            data (dict): Image/thumbnail information.
+        """
         x = self.thumbnails['last-x']
         y = self.thumbnails['last-y']
 
@@ -174,6 +233,7 @@ class MainWindow(Gtk.ApplicationWindow):
                                          y + thumb_offset['y'])
 
     def clear_layout(self):
+        """Remove all elements on the wall and reset it's size."""
         self.thumbnails['last-x'] = 0
         self.thumbnails['last-y'] = 0
         self.thumbnails['page'] = 0
@@ -186,9 +246,21 @@ class MainWindow(Gtk.ApplicationWindow):
             self.thumbnails['container'].get_allocated_height())
 
     def remove_callback(self, widget, data):
+        """Remove a widget.
+
+        Args:
+            widget (Gtk.Widget): Signal receiver.
+            data (None): unused.
+        """
         widget.destroy()
 
     def do_search(self, widget, new_page=False):
+        """Start searching using the ```activate``` signal.
+
+        Args:
+            widget (Gtk.Entry): Entry containing the tags.
+            new_page (bool): Whether to change the page.
+        """
         if not new_page:
             self.thumbnails['data'][:] = []
             if(self.search_thread.ident is not None):
@@ -209,19 +281,25 @@ class MainWindow(Gtk.ApplicationWindow):
 
 
 class KaedeApplication(Gtk.Application):
+    """Application container."""
+
     def __init__(self):
+        """Init function."""
         super(KaedeApplication, self).__init__()
         self.app_window = None
 
     def do_activate(self):
+        """Start working."""
         self.app_window = MainWindow(self)
         self.app_window.show_all()
         self.app_window.do_search(self.app_window.search_input)
 
     def do_startup(self):
+        """Do the startup thing."""
         Gtk.Application.do_startup(self)
 
     def do_shutdown(self):
+        """Clear the app."""
         if(self.app_window.search_thread.is_alive()):
             self.app_window.search_thread.stop()
             self.app_window.search_thread.join(0.5)
@@ -229,9 +307,15 @@ class KaedeApplication(Gtk.Application):
 
 
 class ImageWindow(Gtk.Window):
-    ''' To show the full-size image '''
+    """To show the full-size image."""
 
     def __init__(self, data, parent_window=None):
+        """Init function.
+
+        Args:
+            data (dict):  Image/thumbnail information.
+            parent_window (Gtk.Window): Window holding all the thumbnails.
+        """
         super(ImageWindow, self).__init__()
         self.builder = Gtk.Builder\
                           .new_from_file("ui/image_window_layout.glade")
@@ -290,9 +374,19 @@ class ImageWindow(Gtk.Window):
         self.loader.start()
 
     def close_window(self, widget):
+        """Close the window.
+
+        Args:
+            widget (Gtk.Button): Button pressed.
+        """
         self.close()
 
     def next_image(self, widget):
+        """Show and load the next image on the wall.
+
+        Args:
+            widget (Gtk.Button): Button pressed.
+        """
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
                 if thumb["id"] > self.data["id"]]
@@ -307,6 +401,11 @@ class ImageWindow(Gtk.Window):
         self.loader.start()
 
     def prev_image(self, widget):
+        """Show and load the previous image on the wall.
+
+        Args:
+            widget (Gtk.Button): Button pressed.
+        """
         data = [thumb
                 for thumb in self.parent_window.thumbnails['data']
                 if thumb["id"] < self.data["id"]]
@@ -321,6 +420,12 @@ class ImageWindow(Gtk.Window):
         self.loader.start()
 
     def image_widget_draw(self, widget, cairo_context):
+        """Draw the image according the current sizes.
+
+        Args:
+            widget (Gtk.Widget): Where the draw signal was directed.
+            cairo_context (cairo.Context): Cairo context
+        """
         width = widget.get_allocated_width()
         height = widget.get_allocated_height()
 
@@ -344,6 +449,12 @@ class ImageWindow(Gtk.Window):
         cairo_context.paint()
 
     def save_image(self, widget, data):
+        """Save image to local disk.
+
+        Args:
+            widget (Gtk.Widget): Signal receiver.
+            data (dict): Image descriptions.
+        """
         default_save_dir = os.path.join(os.path.expanduser("~"), "Pictures")
         save_dir = config.get_config('Download settings', 'Save dir',
                                      default_save_dir)
