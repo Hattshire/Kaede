@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 import os
 import gi
-import config
+from config import KaedeConfig
 import threads
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf
 
+config = None
 
 class ThumbnailWidget(Gtk.EventBox):
     """Widget for thumbnails."""
@@ -54,6 +55,7 @@ class MainWindow(Gtk.ApplicationWindow):
             app (Gtk.Application): The application.
         """
         super(MainWindow, self).__init__(application=app)
+        global config
         self.set_title("Kaede")
         self.connect("size-allocate", self.update_on_resize)
 
@@ -108,16 +110,12 @@ class MainWindow(Gtk.ApplicationWindow):
         for switch_name, switch_object in self.config_fields['rating'].items():
             rating = switch_name
             switch_object.set_active(
-                config.get_config(
-                    'Search settings', 'Rating ' + rating, "Enable"
-                ) == "Enable"
+                config['search']['rating-' + rating] != "False"
             )
             switch_object.connect("notify::active", self.rating_config)
 
         self.config_fields['downloads']['path']\
-            .set_current_folder(config.get_config('Download settings',
-                                                  'Save dir',
-                                                  config.default_save_dir))
+            .set_current_folder(config['download']['folder'])
         self.config_fields['downloads']['path']\
             .connect("file-set", self.set_download_path)
 
@@ -127,10 +125,9 @@ class MainWindow(Gtk.ApplicationWindow):
         Args:
             widget (Gtk.FileChooser): Signal receiver.
         """
-        folder = widget.get_current_folder()
-        config.set_config('Download settings',
-                          'Save dir',
-                          folder)
+        global config
+        folder = widget.get_uri().split('file://')[-1]
+        config['download']['folder'] = folder
 
     def wall_scroll(self, widget, scroll_event):
         """Handle scrolling events so it works with the mouse wheel.
@@ -160,11 +157,12 @@ class MainWindow(Gtk.ApplicationWindow):
             button (Gtk.Switch): Signal receiver.
             active (GObject.ParamSpec): New state of the switch.
         """
+        global config
         rating = Gtk.Buildable.get_name(button).split('-')[2]
         if button.get_active():
-            config.set_config('Search settings', 'Rating ' + rating, "Enable")
+            config['search']['rating-' + rating] = "True"
         else:
-            config.set_config('Search settings', 'Rating ' + rating, "Disable")
+            config['search']['rating-' + rating] = "False"
         self.do_search(None)
 
     def update_on_resize(self, widget, allocation):
@@ -455,9 +453,8 @@ class ImageWindow(Gtk.Window):
             widget (Gtk.Widget): Signal receiver.
             data (dict): Image descriptions.
         """
-        default_save_dir = os.path.join(os.path.expanduser("~"), "Pictures")
-        save_dir = config.get_config('Download settings', 'Save dir',
-                                     default_save_dir)
+        global config
+        save_dir = config['download']['folder']
         image_save_path = os.path.join(save_dir, data["image"])
         save_thread = threads.SaveImageThread(path=image_save_path,
                                               pixbuf=self.pixbuf)
@@ -468,4 +465,8 @@ if __name__ == '__main__':
     Gdk.threads_init()
     app = KaedeApplication()
 
-    app.run()
+    config = KaedeConfig()
+    try:
+        app.run()
+    finally:
+        config.save()

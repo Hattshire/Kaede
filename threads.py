@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import config
+from config import KaedeConfig
 import boards
 import errno
 from threading import Thread, Event as threadingEvent
@@ -48,11 +48,10 @@ class SearchThread(StopableThread):
             tags (list): tag list.
             page (int): page num.
         """
+        config = KaedeConfig.__instance__
         ratings = []
         for rating in ['safe', 'questionable', 'explicit']:
-            if config.get_config(
-                'Search settings', 'Rating ' + rating, "Enable"
-            ) != "Enable":
+            if config['search']['rating-' + rating] != "True":
                 ratings.append("-rating:" + rating)
 
         self.tags = tags + ratings

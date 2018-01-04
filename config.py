@@ -7,68 +7,56 @@ import errno
 
 APP_NAME = "Kaede"
 APP_AUTHOR = "Hattshire"
-CONFIG_VERSION = "0.1"
 CONFIG_FILENAME = "config.ini"
 
-dirs = AppDirs(APP_NAME, APP_AUTHOR, version=CONFIG_VERSION)
-file_path = os.path.join(dirs.user_config_dir, CONFIG_FILENAME)
-config = ConfigParser()
 
-default_save_dir = GLib.get_user_special_dir(GLib.USER_DIRECTORY_PICTURES)
-if default_save_dir is None:
-    default_save_dir = os.path.join(os.path.expanduser("~"), "Pictures")
+class KaedeConfig(ConfigParser):
+    """Configuration manager."""
 
-if not os.path.exists(file_path):
-    if not os.path.exists(dirs.user_config_dir):
-        try:
-            os.makedirs(dirs.user_config_dir)
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
+    __defaults__ = {
+        'search': {
+            'rating-safe': True,
+            'rating-questionable': True,
+            'rating-explicit': False
+        },
+        'download': {
+            'folder': GLib.get_user_special_dir(GLib.USER_DIRECTORY_PICTURES)
+            or
+            os.path.join(os.path.expanduser("~"), "Pictures")
+        }
+    }
 
-    _file = open(file_path, "w")
+    # To access from anywhere (from threads.py)
+    __instance__ = None
 
-    config['Search settings'] = {}
-    config['Search settings']['Rating safe'] = "Enabled"
-    config['Search settings']['Rating questionable'] = "Enabled"
-    config['Search settings']['Rating explicit'] = "Enabled"
-    config['Download settings'] = {}
-    config['Download settings']['Save dir'] = default_save_dir
+    def __init__(self):
+        """Init function."""
+        super(KaedeConfig, self).__init__()
+        self.dirs = AppDirs(APP_NAME, APP_AUTHOR)
+        self.file = os.path.join(self.dirs.user_config_dir, CONFIG_FILENAME)
 
-    config.write(_file)
+        # Set the defaults in case of bad or outdated file
+        for item in KaedeConfig.__defaults__.items():
+            self[item[0]] = item[1]
 
-    _file.close()
-else:
-    config.read(file_path)
+        if not os.path.exists(self.file):
+            self.save()
+        else:
+            self.read(self.file)
+        KaedeConfig.__instance__ = self
 
+    def save(self):
+        """Write settings to the settings file."""
+        # Check if the folder containing the file exists.
+        # If not, create it, we don't want annoying errors,
+        # do you?
+        file_dir = os.path.dirname(self.file)
+        if not os.path.exists(file_dir):
+            try:
+                os.makedirs(file_dir)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
 
-def set_config(section, key, value):
-    """Save a setting.
-
-    Args:
-        section (str): Config section.
-        key (str): Config key.
-        value (*): Saved value
-    """
-    if section not in config:
-        config[section] = {}
-    config[section][key] = value
-
-    _file = open(file_path, "w")
-    config.write(_file)
-    _file.close()
-
-
-def get_config(section, key, default_value=None):
-    """Retrieve a setting.
-
-    Args:
-        section (str): Config section.
-        key (str): Config key.
-        default_value (*): Returned value when no setting was previously set.
-    """
-    if section not in config or key not in config[section]:
-        value = default_value
-    else:
-        value = config[section][key]
-    return value
+        with open(self.file, 'w') as inifile:
+            self.write(inifile)
