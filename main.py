@@ -329,7 +329,6 @@ class ImageWindow(Gtk.Window):
         self.save_button = self.builder.get_object('button-save')
         self.prev_button = self.builder.get_object('button-prev')
         self.next_button = self.builder.get_object('button-next')
-        self.close_button = self.builder.get_object('button-close')
         self.props_button = self.builder.get_object('button-props')
 
         self.add(self.content)
@@ -362,7 +361,6 @@ class ImageWindow(Gtk.Window):
 
         self.save_button.connect('clicked', self.save_image, self.data)
         self.props_button.connect('clicked', self.show_props, self.data)
-        self.close_button.connect('clicked', self.close_window)
 
         if self.parent_window is None:
             self.prev_button.destroy()
@@ -373,14 +371,6 @@ class ImageWindow(Gtk.Window):
 
         self.loader = threads.ImageLoadThread(owner=self)
         self.loader.start()
-
-    def close_window(self, widget):
-        """Close the window.
-
-        Args:
-            widget (Gtk.Button): Button pressed.
-        """
-        self.close()
 
     def show_props(self, widget, data):
         """Show a window with the image properties.
