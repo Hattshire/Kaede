@@ -387,7 +387,7 @@ class ImageWindow(Gtk.Window):
         dialog.set_modal(self)
         dialog.set_default_size(300, 300)
 
-        grid = Gtk.Grid(column_spacing=10, margin=10)
+        grid = Gtk.Grid(column_spacing=10, row_spacing=10, margin=10)
         container = Gtk.ScrolledWindow()
         container.add(grid)
         dialog.add(container)
@@ -420,6 +420,7 @@ class ImageWindow(Gtk.Window):
 
         labelTags = Gtk.Label(label="<b>Tags</b>", use_markup=True)
         labelTags.set_xalign(1.0)
+        labelTags.set_yalign(0.0)
         valueTags = Gtk.Label(label=data['tags'], wrap=True)
         valueTags.set_xalign(0.0)
         grid.attach(labelTags, 0, 3, 1, 1)
