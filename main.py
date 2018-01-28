@@ -8,6 +8,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf
 
 config = None
 
+
 class ThumbnailWidget(Gtk.EventBox):
     """Widget for thumbnails."""
 
@@ -329,6 +330,7 @@ class ImageWindow(Gtk.Window):
         self.prev_button = self.builder.get_object('button-prev')
         self.next_button = self.builder.get_object('button-next')
         self.close_button = self.builder.get_object('button-close')
+        self.props_button = self.builder.get_object('button-props')
 
         self.add(self.content)
         self.set_titlebar(self.headerbar)
@@ -359,6 +361,7 @@ class ImageWindow(Gtk.Window):
         self.image_widget.connect("draw", self.image_widget_draw)
 
         self.save_button.connect('clicked', self.save_image, self.data)
+        self.props_button.connect('clicked', self.show_props, self.data)
         self.close_button.connect('clicked', self.close_window)
 
         if self.parent_window is None:
@@ -378,6 +381,62 @@ class ImageWindow(Gtk.Window):
             widget (Gtk.Button): Button pressed.
         """
         self.close()
+
+    def show_props(self, widget, data):
+        """Show a window with the image properties.
+
+        Args:
+            widget (Gtk.Button): Button pressed.
+            data (dict): Image properties.
+        """
+        dialog = Gtk.Window(title="Details - " + str(data['id']))
+        header = Gtk.HeaderBar(title="Details", subtitle=data['id'],
+                               show_close_button=True)
+        dialog.set_titlebar(header)
+        dialog.set_transient_for(self)
+        dialog.set_modal(self)
+        dialog.set_default_size(300, 300)
+
+        grid = Gtk.Grid(column_spacing=10, margin=10)
+        container = Gtk.ScrolledWindow()
+        container.add(grid)
+        dialog.add(container)
+
+        labelID = Gtk.Label(label="<b>ID</b>", use_markup=True)
+        labelID.set_xalign(1.0)
+        valueID = Gtk.Label(label=data['id'])
+        valueID.set_xalign(0.0)
+        grid.attach(labelID, 0, 0, 1, 1)
+        grid.attach_next_to(valueID, labelID,
+                            Gtk.PositionType.RIGHT, 1, 1)
+
+        labelAuthor = Gtk.Label(label="<b>Author</b>", use_markup=True)
+        labelAuthor.set_xalign(1.0)
+        if 'author' not in data:
+            data['author'] = "Unknown"
+        valueAuthor = Gtk.Label(label=data['author'])
+        valueAuthor.set_xalign(0.0)
+        grid.attach(labelAuthor, 0, 1, 1, 1)
+        grid.attach_next_to(valueAuthor, labelAuthor,
+                            Gtk.PositionType.RIGHT, 1, 1)
+
+        labelRating = Gtk.Label(label="<b>Rating</b>", use_markup=True)
+        labelRating.set_xalign(1.0)
+        valueRating = Gtk.Label(label=data['rating'])
+        valueRating.set_xalign(0.0)
+        grid.attach(labelRating, 0, 2, 1, 1)
+        grid.attach_next_to(valueRating, labelRating,
+                            Gtk.PositionType.RIGHT, 1, 1)
+
+        labelTags = Gtk.Label(label="<b>Tags</b>", use_markup=True)
+        labelTags.set_xalign(1.0)
+        valueTags = Gtk.Label(label=data['tags'], wrap=True)
+        valueTags.set_xalign(0.0)
+        grid.attach(labelTags, 0, 3, 1, 1)
+        grid.attach_next_to(valueTags, labelTags,
+                            Gtk.PositionType.RIGHT, 1, 1)
+
+        dialog.show_all()
 
     def next_image(self, widget):
         """Show and load the next image on the wall.
@@ -451,7 +510,7 @@ class ImageWindow(Gtk.Window):
 
         Args:
             widget (Gtk.Widget): Signal receiver.
-            data (dict): Image descriptions.
+            data (dict): Image properties.
         """
         global config
         save_dir = config['download']['folder']

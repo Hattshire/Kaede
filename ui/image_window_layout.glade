@@ -6,8 +6,8 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
-      <object class="GtkButton" id="button-save">
-        <property name="label">gtk-save</property>
+      <object class="GtkButton" id="button-props">
+        <property name="label">gtk-properties</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
@@ -51,8 +51,8 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
-                <property name="label">gtk-ok</property>
+              <object class="GtkButton" id="button-save">
+                <property name="label">gtk-save</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
