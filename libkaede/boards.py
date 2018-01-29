@@ -16,6 +16,10 @@ class BoardProvider():
         """Construct the thumbnail url."""
         pass
 
+    def _sample_url(self, post_data):
+        """Construct the sample url."""
+        pass
+
     def get_posts(self):
         """Retrieve the latest images."""
         return requests.get(self._url('list')).json()
@@ -50,6 +54,12 @@ class BoardProvider():
         if(response.content):
             result = response.json()
         for item in result:
+            if 'thumbnail_url' not in item:
+                item['thumbnail_url'] = self._thumbnail_url(item)
+            if 'image_url' not in item:
+                item['image_url'] = self._image_url(item)
+            if 'sample_url' not in item and 'sample' in item:
+                item['sample_url'] = self._sample_url(item)
             yield item
 
 
@@ -72,6 +82,10 @@ class GelbooruProvider(BoardProvider):
               post_data['hash'] + '.jpg'
         return url
 
+    def _sample_url(self, post_data):
+        # TODO Implement sample urls for gelbooru
+        return self._image_url(post_data)
+
 
 class TbibProvider(BoardProvider):
     """Board provider for The big image board."""
@@ -91,3 +105,7 @@ class TbibProvider(BoardProvider):
         url = "http://tbib.org/thumbnails/" + \
               post_data['directory'] + '/thumbnail_' + post_data['image']
         return url
+
+    def _sample_url(self, post_data):
+        # TODO Implement sample urls for tbib
+        return self._image_url(post_data)

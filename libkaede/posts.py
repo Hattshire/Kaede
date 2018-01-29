@@ -1,4 +1,8 @@
+import requests
+from multiprocessing.pool import ThreadPool
 from .boards import TbibProvider
+
+WORKER_POOL = ThreadPool()
 
 
 class Image():
@@ -11,14 +15,43 @@ class Image():
             url (str): Where the image is located.
         """
         self.url = url
+        self.buffer = bytearray()
+        self.size = 0
+        self.progress = 0
 
     def load(self):
         """Load the image."""
-        pass
+        global WORKER_POOL
+        WORKER_POOL.apply_async(self._async_loader)
+
+    def _async_loader(self):
+        data_stream = requests.get(self.url, stream=True).raw
+        self.size = data_stream.getheader('Content-Length')
+        for data in data_stream.stream(amt=None, decode_content=True):
+            if data:
+                self.buffer.extend(data)
+            if self.size is not None:
+                self.progress = int(self.size) / data_stream.tell()
 
     def unload(self):
         """Remove the image from memory."""
-        pass
+        self.bytes = b''
+
+    def save(self, folder, filename=None):
+        """Save the image to disk.
+
+        Args:
+            folder (str): Where to save.
+            filename (str): How to name.
+        """
+        global WORKER_POOL
+        WORKER_POOL.apply_async(self._async_save, (folder, filename))
+
+    def _async_save(self, folder, filename):
+        if filename is None:
+            filename = self.url.split('/')[-1]
+        with open(folder+filename, 'wb') as output_file:
+            output_file.write(self.buffer)
 
 
 class Thumbnail(Image):
@@ -57,6 +90,7 @@ class Post():
                 self.raw_data[key] = 'Unknown'
 
         self.Thumbnail = Image(self.raw_data['thumbnail_url'])
+        self.Thumbnail.load()
         self.Image = Image(self.raw_data['image_url'])
         if 'sample' in self.raw_data:
             self.Sample = Image(self.raw_data['sample_url'])
@@ -137,7 +171,10 @@ class PostManager():
             tags = self.tags
         elif type(tags) is str:
             tags = [tags]
-        data = self.board_provider.search(tags, 0)
+        try:
+            data = self.board_provider.search(tags, 0)
+        except requests.exceptions.ConnectionError:
+            data = None
 
         if(data):
             for item in data:
