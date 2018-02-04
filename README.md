@@ -14,6 +14,7 @@ Required packages
 =================
 Kaede uses the following:
 * Python 3
+* Python Appdirs
 * Python Requests
 * Python GObject
 * Pillow

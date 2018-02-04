@@ -329,7 +329,6 @@ class ImageWindow(Gtk.Window):
         self.save_button = self.builder.get_object('button-save')
         self.prev_button = self.builder.get_object('button-prev')
         self.next_button = self.builder.get_object('button-next')
-        self.close_button = self.builder.get_object('button-close')
         self.props_button = self.builder.get_object('button-props')
 
         self.add(self.content)
@@ -362,7 +361,6 @@ class ImageWindow(Gtk.Window):
 
         self.save_button.connect('clicked', self.save_image, self.data)
         self.props_button.connect('clicked', self.show_props, self.data)
-        self.close_button.connect('clicked', self.close_window)
 
         if self.parent_window is None:
             self.prev_button.destroy()
@@ -373,14 +371,6 @@ class ImageWindow(Gtk.Window):
 
         self.loader = threads.ImageLoadThread(owner=self)
         self.loader.start()
-
-    def close_window(self, widget):
-        """Close the window.
-
-        Args:
-            widget (Gtk.Button): Button pressed.
-        """
-        self.close()
 
     def show_props(self, widget, data):
         """Show a window with the image properties.
@@ -397,7 +387,7 @@ class ImageWindow(Gtk.Window):
         dialog.set_modal(self)
         dialog.set_default_size(300, 300)
 
-        grid = Gtk.Grid(column_spacing=10, margin=10)
+        grid = Gtk.Grid(column_spacing=10, row_spacing=10, margin=10)
         container = Gtk.ScrolledWindow()
         container.add(grid)
         dialog.add(container)
@@ -430,6 +420,7 @@ class ImageWindow(Gtk.Window):
 
         labelTags = Gtk.Label(label="<b>Tags</b>", use_markup=True)
         labelTags.set_xalign(1.0)
+        labelTags.set_yalign(0.0)
         valueTags = Gtk.Label(label=data['tags'], wrap=True)
         valueTags.set_xalign(0.0)
         grid.attach(labelTags, 0, 3, 1, 1)
