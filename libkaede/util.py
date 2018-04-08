@@ -54,7 +54,7 @@ class Image():
 			global WORKER_POOL
 			WORKER_POOL.apply_async(self._save, (folder, filename))
 		else:
-			self._savefolder, filename)
+			self._save(folder, filename)
 
 	def _save(self, folder, filename):
 		"""Save the image to disk syncronously.
