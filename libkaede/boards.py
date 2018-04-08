@@ -65,6 +65,7 @@ class BoardProvider():
 			tags (list): A list of tags.
 			page (int): Page to retrieve.
 		"""
+		#TODO Get xml and make json optional
 		tag_string = '+'.join(tags)
 		response = requests.get(self._list_url(tag_string, page))
 		result = []

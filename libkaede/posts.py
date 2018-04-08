@@ -133,7 +133,7 @@ class PostManager():
 			pass
 		elif type(key) is str:
 			if key not in self.posts:
-				self.do_search(['id:'+key])
+				self.search(['id:'+key])
 			return self.posts[key]
 		else:
 			raise KeyError(key)
@@ -159,9 +159,9 @@ class PostManager():
 		Args:
 			tags (list|str|None): Keywords to search for.
 		"""
-		return self.do_search(tags)
+		return self.search(tags)
 
-	def do_search(self, tags=None):
+	def search(self, tags=None):
 		"""Retrieve a bunch of posts according to the tags.
 		
 		Args:
