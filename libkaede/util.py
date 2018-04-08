@@ -14,21 +14,21 @@ class Image():
 		self.url = url
 		self.buffer = bytearray()
 		self.size = 0
-		self.progress = 0
+		self.progress = 0.
 
 	def load(self):
 		"""Load the image."""
 		global WORKER_POOL
-		WORKER_POOL.apply_async(self._async_loader)
+		WORKER_POOL.apply_async(self._loader)
 
-	def _async_loader(self):
+	def _loader(self):
 		data_stream = requests.get(self.url, stream=True).raw
 		self.size = data_stream.getheader('Content-Length')
-		for data in data_stream.stream(amt=None, decode_content=True):
+		for data in data_stream.stream(decode_content=True):
 			if data:
 				self.buffer.extend(data)
 			if self.size is not None:
-				self.progress = int(self.size) / data_stream.tell()
+				self.progress = data_stream.tell() / int(self.size)
 
 	def unload(self):
 		"""Remove the image from memory."""
