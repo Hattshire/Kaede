@@ -66,7 +66,7 @@ class BoardProvider():
 			page (int): Page to retrieve.
 		"""
 		tag_string = '+'.join(tags)
-		response = requests.get(self._url('list', tag_string, page))
+		response = requests.get(self._url(tag_string, page))
 		result = []
 
 		if(response.content):
