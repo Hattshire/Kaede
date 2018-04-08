@@ -1,7 +1,5 @@
 import requests
-from multiprocessing.pool import ThreadPool
-
-WORKER_POOL = ThreadPool()
+from .util import *
 
 
 class Post():

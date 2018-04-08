@@ -21,6 +21,7 @@ Usage:
 		where the post id must be an string.
 """
 
+from multiprocessing.pool import ThreadPool
 import gi
 gi.require_version('Gdk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
@@ -34,6 +35,7 @@ APP_URL = "https://github.com/Hattshire/Kaede"
 APP_AUTHOR = "Hattshire"
 APP_AUTHOR_MAIL = "com.gmail:hattshire"
 
-from .util import *
+WORKER_POOL = ThreadPool()
+
 from .boards import *
 from .posts import *
