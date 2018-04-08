@@ -107,14 +107,6 @@ class PostManager():
 		self.board_provider = board_provider
 		self.posts = {}
 
-	def set_board_provider(self, provider_instance):
-		"""Set the BoardProvider instance.
-		
-		Args:
-			board_provider (BoardProvider): An instance of BoardProvider.
-		"""
-		self.board_provider = provider_instance
-
 	def __repr__(self):
 		"""Create an string representation."""
 		return "PostManager(count=%i, tags=[%s])" % (len(self.posts),
