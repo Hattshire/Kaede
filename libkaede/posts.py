@@ -1,5 +1,5 @@
 import requests
-from .util import *
+from .util import Image
 
 
 class Post():
@@ -40,7 +40,7 @@ class Post():
 
 	def __repr__(self):
 		"""Create an string representation."""
-		return "Post(ID=" + str(self.raw_data['id']) + ")"
+		return f"{self.__class__.__name__}(ID={self.raw_data['id']})"
 
 	def __getitem__(self, key):
 		"""Emulate a mapping behaviour.
@@ -50,11 +50,12 @@ class Post():
 		Args:
 			key (str): Keyword to get the data from.
 		"""
-		if type(key) is str:
+		if type(key) is str and key in self.raw_data:
 			return self.raw_data[key]
 		else:
-			raise KeyError(key)
-		#TODO: Give an useful error message
+			raise KeyError("The key `" + str(key) + \
+						   "`, of type `" + str(type(key)) + \
+						   "` is not valid. Use a valid string instead.")
 
 	def __setitem__(self, key, value):
 		"""Emulate a mapping behaviour.
@@ -68,8 +69,9 @@ class Post():
 		if type(key) is str:
 			self.raw_data[key] = value
 		else:
-			raise KeyError(key)
-		#TODO: Give an useful error message
+			raise KeyError("The key `" + str(key) + \
+						   "`, of type `" + str(type(key)) + \
+						   "` is not valid. Use an string instead.")
 
 	def __contains__(self, key):
 		"""Check for `key` existence.
