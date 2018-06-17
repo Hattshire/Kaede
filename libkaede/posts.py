@@ -33,9 +33,8 @@ class Post():
 				self.raw_data[key] = 'Unknown'
 
 		self.Thumbnail = Image(self.raw_data['thumbnail_url'])
-		self.Thumbnail.load()
 		self.Image = Image(self.raw_data['image_url'])
-		if 'sample' in self.raw_data:
+		if 'sample_url' in self.raw_data:
 			self.Sample = Image(self.raw_data['sample_url'])
 
 	def __repr__(self):
@@ -50,8 +49,15 @@ class Post():
 		Args:
 			key (str): Keyword to get the data from.
 		"""
-		if type(key) is str and key in self.raw_data:
-			return self.raw_data[key]
+		if type(key) is str:
+			if key in self.raw_data:
+				return self.raw_data[key]
+			if key == "thumbnail":
+				return self.Thumbnail
+			if key == "image":
+				return self.Image
+			if key == "sample":
+				return self.Sample
 		else:
 			raise KeyError("The key `" + str(key) + \
 						   "`, of type `" + str(type(key)) + \
