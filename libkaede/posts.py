@@ -40,7 +40,7 @@ class Post():
 
 	def __repr__(self):
 		"""Create an string representation."""
-		return f"{self.__class__.__name__}(ID={self.raw_data['id']})"
+		return self.__class__.__name__ + "(ID=" + str(self.raw_data['id']) + "\""
 
 	def __getitem__(self, key):
 		"""Emulate a mapping behaviour.
