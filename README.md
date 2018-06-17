@@ -1,6 +1,6 @@
 Kaede
 =====
-[![Build Status](https://travis-ci.org/Hattshire/Kaede.svg?branch=master)](https://travis-ci.org/Hattshire/Kaede) [![Coverage Status](https://coveralls.io/repos/github/Hattshire/Kaede/badge.svg?branch=master)](https://coveralls.io/github/Hattshire/Kaede?branch=master)
+[![Build Status](https://travis-ci.org/Hattshire/Kaede.svg?branch=libkaede)](https://travis-ci.org/Hattshire/Kaede) [![Coverage Status](https://coveralls.io/repos/github/Hattshire/Kaede/badge.svg?branch=libkaede)](https://coveralls.io/github/Hattshire/Kaede?branch=libkaede)
 
 Kaede is an Image-board browser currently supporting only tbib.org
 
