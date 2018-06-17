@@ -31,12 +31,12 @@ class Image():
 	def _loader(self):
 		"""Load the image synchronously."""
 		data_stream = requests.get(self.url, stream=True).raw
-		self.size = data_stream.getheader('Content-Length')
+		self.size = int(data_stream.getheader('Content-Length'))
 		for data in data_stream.stream(decode_content=True):
 			if data:
 				self.buffer.extend(data)
 			if self.size is not None:
-				self.progress = data_stream.tell() / int(self.size)
+				self.progress = data_stream.tell() / self.size
 
 	def unload(self):
 		"""Remove the image from memory."""

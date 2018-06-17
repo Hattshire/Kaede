@@ -32,6 +32,6 @@ gi.require_version('Gio', '2.0')
 
 WORKER_POOL = ThreadPool()
 
-from .__version__ import *
+from .__version__ import __title__, __version__, __description__, __url__, __author__, __author_email__, __license__, __copyright__
 from .boards import *
 from .posts import *
