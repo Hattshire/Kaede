@@ -1,15 +1,19 @@
 language: python
 sudo: required
 python:
- - "3.4_with_system_site_packages"
+ - "3.7_with_system_site_packages"
 env:
- - PACKAGES="xvfb gir1.2-gtk-3.0 python3-gi python3-gi-cairo python3-pep8 pyflakes python3-pytest" PYTHON="python3"
+ - PACKAGES="python3-pep8 pyflakes python3-pytest"
+ - PYTHON="python3"
 
 before_install:
 - sudo apt-get update -qq
 - sudo apt-get install --no-install-recommends -y $(echo $PACKAGES)
 install:
- - "pip install -r requirements.txt"
- - "pip install httpretty"
+ - "pip install flit"
+ - "flit install --deps all"
+ - "flit build"
 script:
- - xvfb-run -a "$PYTHON" -m "pytest"
+  - "PYTHON" -m "pytest"
+#script:
+# - xvfb-run -a "$PYTHON" -m "pytest"

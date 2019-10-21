@@ -8,6 +8,7 @@ I made it with the objective of learning a bit of Gtk3 and understanding GUI dev
 
 Screenshot
 ==========
+_Warning: Old screenshot, this branch does not contain a gui for now_
 ![imgur](https://i.imgur.com/T2SwSnp.png)
 
 Required packages
@@ -15,9 +16,6 @@ Required packages
 Kaede uses the following:
 * Python 3
 * Python Requests
-* Python GObject
-* Pillow
-* Gtk 3.0 (tested with v3.22.26)
 
 TODO
 =====
@@ -29,4 +27,5 @@ TODO
 
 License
 =======
-This software is licensed under the law and order of GPLv3
+This software is dedicated to everyone who can do me cakes uwu, even if they aren't brave enough.
+For more information, please refer to <http://unlicense.org/>
