@@ -9,4 +9,6 @@ install:
  - "flit install --deps all"
  - "flit build"
 script:
-  - python -m "pytest"
+ - python -m "pytest"
+after_success:
+ - coveralls
