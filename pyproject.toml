@@ -10,7 +10,7 @@ description-file = "README.md"
 dist-name = "libkaede"
 home-page = "https://github.com/hattshire/kaede"
 requires = ["requests"]
-requires-python = "~=3.7"
+requires-python = "~=3.6"
 
 classifiers = [
 	"Intended Audience :: Developers",
