@@ -15,5 +15,3 @@ install:
  - "flit build"
 script:
   - "PYTHON" -m "pytest"
-#script:
-# - xvfb-run -a "$PYTHON" -m "pytest"
