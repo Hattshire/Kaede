@@ -7,16 +7,23 @@ gi.require_versions({
 })
 from gi.repository import Gtk, GdkPixbuf
 import threading
+import kaede
+
+BACKEND_NAME = "NO_DEFAULT_BACKEND"
+
+if BACKEND_NAME in kaede.board_providers:
+	BACKEND = kaede.board_providers[BACKEND_NAME]
+else:
+	BACKEND_NAME, BACKEND = list(kaede.board_providers.items())[0]
 
 KaedeGtkApp = Gtk.Application.new("moe.hattshire.kaede", 0)
 
 TITLE = "Kaede"
-BACKEND = "Tbib"
 
 titlebar = Gtk.HeaderBar.new()
 titlebar.set_title(TITLE)
 titlebar.set_show_close_button(True)
-titlebar.set_subtitle(BACKEND)
+titlebar.set_subtitle(BACKEND_NAME)
 
 
 def onAppActivate(app):
@@ -32,10 +39,7 @@ def onAppActivate(app):
 	box.pack_start(imgsrc, True, True, 0)
 	box.pack_start(img, True, True, 0)
 
-	def loadImage(image, dest):
-		buffer = bytes()
-		with open(image, 'rb') as imf:
-			buffer = imf.read()
+	def loadImage(buffer, dest):
 
 		loader = GdkPixbuf.PixbufLoader.new()
 		loader.write(buffer)
@@ -51,7 +55,11 @@ def onAppActivate(app):
 			dest.set_from_animation(anim)
 
 	def loadImageAsyncSignal(widget, dest):
-		threading.Thread(target=loadImage, args=(widget.props.text, dest)).run()
+		tags = widget.props.text.strip().split()
+		post = next(BACKEND.search(tags, 0))
+		post['image'].load()
+
+		threading.Thread(target=loadImage, args=(post['image'].buffer, dest)).run()
 
 	imgsrc.connect('activate', loadImageAsyncSignal, img)
 	window.add(box)
