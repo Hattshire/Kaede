@@ -5,7 +5,7 @@ gi.require_versions({
 	'Gtk': '3.0', 'Gio': '2.0',
 	'Gdk': '3.0', 'GdkPixbuf': '2.0'
 })
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import threading
 import kaede
 
@@ -33,14 +33,11 @@ def onAppActivate(app):
 	window.set_position(Gtk.WindowPosition.CENTER)
 	window.set_titlebar(titlebar)
 
-	box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
 	img = Gtk.Image.new()
-	imgsrc = Gtk.Entry.new()
-	box.pack_start(imgsrc, True, True, 0)
-	box.pack_start(img, True, True, 0)
+	tag_entry = Gtk.Entry.new()
+	titlebar.set_custom_title(tag_entry)
 
 	def loadImage(buffer, dest):
-
 		loader = GdkPixbuf.PixbufLoader.new()
 		loader.write(buffer)
 		loader.close()
@@ -61,8 +58,8 @@ def onAppActivate(app):
 
 		threading.Thread(target=loadImage, args=(post['image'].buffer, dest)).run()
 
-	imgsrc.connect('activate', loadImageAsyncSignal, img)
-	window.add(box)
+	tag_entry.connect('activate', loadImageAsyncSignal, img)
+	window.add(img)
 	window.show_all()
 
 
