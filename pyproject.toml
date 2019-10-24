@@ -35,5 +35,5 @@ test = [
 doc = ["sphinx"]
 
 [tool.flit.entrypoints."kaede.boards_provider"]
-"tbib" = "kaede.boards:GelbooruProvider"
+"tbib" = "kaede.boards:TbibProvider"
 "gelbooru" = "kaede.boards:GelbooruProvider"
