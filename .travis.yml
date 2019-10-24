@@ -1,19 +1,14 @@
 language: python
 sudo: required
 python:
- - "3.7_with_system_site_packages"
-env:
- - PACKAGES="python3-pep8 pyflakes python3-pytest"
- - PYTHON="python3"
-
-before_install:
-- sudo apt-get update -qq
-- sudo apt-get install --no-install-recommends -y $(echo $PACKAGES)
+ - "3.6"
+ - "3.7"
+ - "3.8"
 install:
  - "pip install flit"
  - "flit install --deps all"
  - "flit build"
 script:
-  - "PYTHON" -m "pytest"
-#script:
-# - xvfb-run -a "$PYTHON" -m "pytest"
+ - python -m "pytest"
+after_success:
+ - coveralls
