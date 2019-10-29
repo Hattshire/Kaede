@@ -4,11 +4,11 @@ Kaede
 
 Kaede is an Image-board browser currently supporting only tbib.org
 
-I made it with the objective of learning a bit of Gtk3 and understanding GUI development
+I made it with the objective of learning a bit of Gtk3 and understanding GUI development.
 
 Screenshot
 ==========
-_Warning: Old screenshot, this branch does not contain a gui for now_
+_Warning: Old screenshot, this branch contain a buggier, featureless gui for now_
 ![imgur](https://i.imgur.com/T2SwSnp.png)
 
 Required packages
@@ -16,14 +16,15 @@ Required packages
 Kaede uses the following:
 * Python 3
 * Python Requests
+* PyGObject (for GTKUI)
 
 TODO
 =====
-* Support animations, at least GIF
-* Package
-* Add tests
-* Add settings dialog
-* Support several boards
+* FIXME Randomly throws SIGSEGV or SIGABRT
+* FIXME Warns when adding images too quick for the sorting algo
+* Add Settings
+* Show images
+* Show webm animations
 
 License
 =======
