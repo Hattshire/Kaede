@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import requests
+import os
 from .posts import Post
 
 
@@ -102,7 +103,7 @@ class GelbooruProvider(Board):
 
 	@staticmethod
 	def _thumbnail_url(post_data):
-		return "http://simg3.gelbooru.com/thumbnails/" + \
+		return "http://img2.gelbooru.com/thumbnails/" + \
 		       post_data['directory'] + '/thumbnail_' + \
 		       post_data['hash'] + '.jpg'
 
@@ -128,7 +129,7 @@ class TbibProvider(Board):
 	@staticmethod
 	def _thumbnail_url(post_data):
 		return "http://tbib.org/thumbnails/" + \
-		       post_data['directory'] + '/thumbnail_' + post_data['image']
+		       post_data['directory'] + '/thumbnail_' + os.path.splitext(post_data['image'])[0] + ".jpg"
 
 	@staticmethod
 	def _sample_url(post_data):
