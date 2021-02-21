@@ -21,7 +21,7 @@ class MockProvider(boards.Board):
 
 	@staticmethod
 	def _image_url(post_data):
-		return "http://examp.le/{}/{}" % (post_data['type'], post_data['filename'])
+		return "http://examp.le/{}/{}" % post_data['type'], post_data['filename']
 	
 	@staticmethod
 	def _thumbnail_url(post_data):
