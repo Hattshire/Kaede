@@ -3,22 +3,27 @@ from .image import Image
 
 
 class Post():
-	"""Post object.
+	"""Contains details about a post. 
 
-	Contains details about a post. Use `dir` to see available details.
+	:param data: Source data used to build the object on.
+	:type data: dict
+
+	.. warning:: `data` parameter must have `Post.__required_keys__` keys included.
+	
+	Use :py:func:`dir` to see available details.
 	"""
 
 	__required_keys__ = ('id', 'thumbnail_url', 'tags', 'image_url', 'rating')
 	__standard_keys__ = ('author', 'date', 'hash', 'height', 'width')
 	# 'sample_url's are optional, but recommended, as they're scaled down versions
-	# of the original image and can bring better latency on GUI
+	# of the original image and can be loaded quicker.
 
 	def __init__(self, data):
 		"""Init function.
 
-		Args:
-			data (dict): Source data used to build the object on.
-				* Must have `Post.__required_keys__` keys included
+		:param data: Source data used to build the object on. * Must have `Post.__required_keys__` keys included
+		:type data: dict
+
 		"""
 		self._data = {}
 		self.Image = None
@@ -109,15 +114,25 @@ class Post():
 class SearchHelper():
 	"""Provides post management and cache.
 
-		Usage:
-			1. Create a new instance:
-				`bpv = Board()`
-				`results = SearchHelper(bpv, tags=["red_eyes", "brown_hair"])`
-			2. Get elements:
-				`results.more()`
-				`posts = [YourProcessPostsFn(post) for post in results]`
-			3. [...]
-			4. Profit!
+	:param board_provider: An instance of Board.
+	:type  board_provider: kaede.boards.Board
+	:param tags: Keywords to search on the board.
+	:type tags: list
+	
+	Usage:
+
+		1. Create a new instance::
+
+			bpv = Board()
+			results = SearchHelper(bpv, tags=["red_eyes", "brown_hair"])
+
+		2. Get elements::
+
+			results.more()
+			posts = [YourProcessPostsFn(post) for post in results]
+		
+		3. [...]
+		4. Profit!
 	"""
 
 	def __init__(self, board_provider, tags=[]):
@@ -145,30 +160,28 @@ class SearchHelper():
 		return "PostManager(count=%i, tags=[%s])" % (len(self.posts),
 		                                             ', '.join(self.tags))
 
-	def __getitem__(self, key):
+	def __getitem__(self, post_id):
 		"""Emulate a mapping behaviour.
 		
-		Return the value stored in `key`.
+		Returns the post from a given Post ID.
 		
 		Args:
-			key (str): Keyword to get the data from.
+			post_id (str): Post ID.
 		"""
-		if type(key) is int:
-			return self.__getitem__(str(key))
-		elif type(key) is str:
-			if key not in self.posts:
-				self.search(['id:' + key])
-			return self.posts[key]
+		if type(post_id) is int:
+			return self.__getitem__(str(post_id))
+		elif type(post_id) is str and post_id in self:
+			return self.posts[post_id]
 		else:
-			raise KeyError(key)
+			raise KeyError(post_id)
 
-	def __contains__(self, key):
-		"""Check for `key` existence.
+	def __contains__(self, post_id):
+		"""Check for `post_id` existence.
 		
 		Args:
-			key (str): Keyword to check.
+			post_id (str): ID to check.
 		"""
-		if key in self.posts:
+		if post_id in self.posts:
 			return True
 		else:
 			return False
@@ -179,14 +192,14 @@ class SearchHelper():
 
 	def __call__(self):
 		"""Search on instance call (shortcut for self.more)"""
-		return self.search()
+		return self.more()
 
 	def ids(self):
 		"""Retrieve the stored post ids."""
 		return self.posts.keys().__iter__()
 
 	def more(self):
-		"""Retrieve a bunch of posts according to the tags."""
+		"""Retrieve the next load of posts."""
 		tags = self.tags
 		data = self.board_provider.search(tags, self.loaded_pages)
 

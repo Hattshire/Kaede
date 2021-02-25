@@ -10,3 +10,4 @@ __pycache__/
 dist/
 .coverage
 htmlcov/
+docs/build

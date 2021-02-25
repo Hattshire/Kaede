@@ -5,31 +5,35 @@ from .posts import Post
 
 
 class Board():
-	""" Base for a imageboard provider.
+	"""Base for a imageboard provider.
 
-		<This class does not save states, and thus can be used uninitialized>
-		Usage:
-			- Board.search(["tags"], page=0):
-				Returns the last posts available for the tags specified, with
-				an offset of `page` pages.
-			- Board.get_posts():
-				Shortcut for Board.search([],0). Gets the only the latest posts.
+	Example usage::
 
-		Implementation of new `Board`:
-			- For simple, danbooru compatible boards, override `_list_url`,
-			  `_image_url`, `_thumbnail_url` and `_sample_url` with the
-			  corresponding uris
-			- For other kind of boards, like chans, override `search` with a
-			  generator that yields `Post`s
+		from kaede.boards import Board
+
+		for post in Board.search(["tags"], page=0):
+			...
+
+
+	Implementation of new `Board`:
+	
+		- For simple danbooru-compatible boards, override :py:meth:`._list_url`,
+		  :py:meth:`_image_url`, :py:meth:`_thumbnail_url` and :py:meth:`._sample_url` with the
+		  corresponding uris.
+		
+		- For other kind of boards, like chans, override :py:meth:`.search` with a generator that yields :py:class:`kaede.posts.Post` .
+
 	"""
 
 	@staticmethod
 	def _list_url(tags=None, page=0):
 		"""Construct the post listing url.
 		
-		Args:
-			tags (list|str|None): Keywords to search for.
-			page (int): Search page to show.
+		:param tags: Keywords to search for.
+		:type tags: list or str or None
+		:param page: Search page to show.
+		:type page: int
+		:rtype: str
 		"""
 		pass
 
@@ -37,8 +41,9 @@ class Board():
 	def _image_url(post_data):
 		"""Construct the image url.
 		
-		Args:
-			post_data (dict): Raw board post data.
+		:param post_data: Raw board post data.
+		:type post_data: dict
+		:rtype: str
 		"""
 		pass
 
@@ -46,8 +51,9 @@ class Board():
 	def _thumbnail_url(post_data):
 		"""Construct the thumbnail url.
 		
-		Args:
-			post_data (dict): Raw board post data.
+		:param post_data: Raw board post data.
+		:type post_data: dict
+		:rtype: str
 		"""
 		pass
 
@@ -55,23 +61,29 @@ class Board():
 	def _sample_url(post_data):
 		"""Construct the sample url.
 		
-		Args:
-			post_data (dict): Raw board post data.
+		:param post_data: Raw board post data.
+		:type post_data: dict
+		:rtype: str
 		"""
 		pass
 
 	@classmethod
 	def get_posts(cls):
-		"""Retrieve the latest images."""
+		"""Retrieve the latest posts.
+
+		Shortcut for `Board.search([],0)`.
+		"""
 		return cls.search([])
 
 	@classmethod
 	def search(cls, tags, page=0):
-		"""Get a list of image informations.
+		"""Get a list of posts' metadata.
 
-		Args:
-			tags (list): A list of tags.
-			page (int): Page to retrieve.
+		:param tags: A list of tags.
+		:type tags: list
+		:param page: Page to retrieve.
+		:type page: int
+		:rtype: Iterator that yields :py:class:`kaede.posts.Post`
 		"""
 		tag_string = '+'.join(tags)
 		response = requests.get(cls._list_url(tag_string, page))
