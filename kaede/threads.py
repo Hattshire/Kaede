@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-from config import KaedeConfig
-import boards
+from .config import KaedeConfig
+from . import boards
 import errno
 from threading import Thread, Event as threadingEvent
 import os

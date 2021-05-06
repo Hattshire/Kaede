@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 import os
 import gi
-from config import KaedeConfig
-import threads
+from .config import KaedeConfig
+from . import threads
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf
 
@@ -63,9 +63,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.size = {'height': 0, 'width': 0}
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("ui/main_window_layout.glade")
-        self.builder.add_from_file("ui/headerbar_menu.glade")
-        self.builder.add_from_file("ui/headerbar_layout.glade")
+        self.builder.add_from_file(os.path.join(os.path.dirname(__file__), "ui", "main_window_layout.glade"))
+        self.builder.add_from_file(os.path.join(os.path.dirname(__file__), "ui", "headerbar_menu.glade"))
+        self.builder.add_from_file(os.path.join(os.path.dirname(__file__), "ui", "headerbar_layout.glade"))
 
         content = self.builder.get_object('window-content')
         headerbar = self.builder.get_object('main-headerbar')
@@ -317,7 +317,7 @@ class ImageWindow(Gtk.Window):
         """
         super(ImageWindow, self).__init__()
         self.builder = Gtk.Builder\
-                          .new_from_file("ui/image_window_layout.glade")
+                          .new_from_file(os.path.join(os.path.dirname(__file__), "ui", "image_window_layout.glade"))
         self.data = data
         self.pixbuf = data['thumbnail_pixbuf']
         self.parent_window = parent_window
