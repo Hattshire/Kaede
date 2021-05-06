@@ -64,12 +64,14 @@ class SearchThread(StopableThread):
             image_data = boards.TbibProvider().get_thumbnail(item)
             if(self.stopped()):
                 return
+            try:
+                pixbuf_loader = GdkPixbuf.PixbufLoader.new()
+                pixbuf_loader.write(image_data)
 
-            pixbuf_loader = GdkPixbuf.PixbufLoader.new()
-            pixbuf_loader.write(image_data)
-
-            item['thumbnail_pixbuf'] = pixbuf_loader.get_pixbuf()
-            pixbuf_loader.close()
+                item['thumbnail_pixbuf'] = pixbuf_loader.get_pixbuf()
+                pixbuf_loader.close()
+            except:
+                pass # TODO LOG or something
 
             if item['thumbnail_pixbuf'] is None:
                 continue
