@@ -172,12 +172,10 @@ class MainWindow(Gtk.ApplicationWindow):
             widget (Gtk.Window): Signal receiver.
             allocation (Gdk.Rectangle): New size allocation.
         """
-        if allocation.width != self.size['width']:
+        if allocation.width != self.size['width'] or allocation.height != self.size['height']:
             self.size['width'] = allocation.width
-
-        if allocation.height != self.size['height']:
             self.size['height'] = allocation.height
-            self.clear_layout()
+            self.clear_layout(reset=False)
             self.thumbnails['y-offset'] = \
                 (self.thumbnails['container'].get_size().height % 160) // 2
             for item in self.thumbnails['data']:
@@ -230,15 +228,13 @@ class MainWindow(Gtk.ApplicationWindow):
                                          x + thumb_offset['x'],
                                          y + thumb_offset['y'])
 
-    def clear_layout(self):
+    def clear_layout(self, reset=True):
         """Remove all elements on the wall and reset it's size."""
         self.thumbnails['last-x'] = 0
         self.thumbnails['last-y'] = 0
-        self.thumbnails['page'] = 0
-        self.thumbnails['container'].do_forall(self.thumbnails['container'],
-                                               False,
-                                               self.remove_callback,
-                                               None)
+        if reset:
+            self.thumbnails['page'] = 0
+        self.thumbnails['container'].foreach(self.remove_callback, None)
         self.thumbnails['container'].set_size(
             self.thumbnails['container'].get_allocated_width(),
             self.thumbnails['container'].get_allocated_height())
