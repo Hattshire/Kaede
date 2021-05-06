@@ -4,7 +4,7 @@ import gi
 from .config import KaedeConfig
 from . import threads
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf
+from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 
 config = None
 
@@ -55,9 +55,8 @@ class MainWindow(Gtk.ApplicationWindow):
         Args:
             app (Gtk.Application): The application.
         """
-        super(MainWindow, self).__init__(application=app)
+        super(MainWindow, self).__init__(application=app, title="Kaede")
         global config
-        self.set_title("Kaede")
         self.connect("size-allocate", self.update_on_resize)
 
         self.size = {'height': 0, 'width': 0}
@@ -119,7 +118,7 @@ class MainWindow(Gtk.ApplicationWindow):
             .set_current_folder(config['download']['folder'])
         self.config_fields['downloads']['path']\
             .connect("file-set", self.set_download_path)
-
+        
     def set_download_path(self, widget):
         """Handle download folder setting changes.
 
@@ -286,6 +285,9 @@ class KaedeApplication(Gtk.Application):
         """Init function."""
         super(KaedeApplication, self).__init__()
         self.app_window = None
+        self.set_application_id("dev.hattshire.kaede")
+        GLib.set_prgname(self.props.application_id)
+        GLib.set_application_name("Kaede")
 
     def do_activate(self):
         """Start working."""
