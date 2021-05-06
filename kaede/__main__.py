@@ -339,8 +339,12 @@ class ImageWindow(Gtk.Window):
         self.set_title(data['tags'])
 
         # Set window size proportionally to the image
-        screen = self.get_screen()
-        max_width, max_height = screen.get_width(), screen.get_height()
+        window = parent_window.get_window()
+        workarea = self.get_screen() \
+                        .get_display() \
+                        .get_monitor_at_window(window) \
+                        .get_workarea()
+        max_width, max_height = workarea.width, workarea.height
 
         if max_width < data['width']:
             width = max_width
