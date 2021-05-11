@@ -35,7 +35,7 @@ class Board():
 		:type page: int
 		:rtype: str
 		"""
-		pass
+		raise NotImplementedError("_list_url needed")
 
 	@staticmethod
 	def _image_url(post_data):
@@ -45,7 +45,7 @@ class Board():
 		:type post_data: dict
 		:rtype: str
 		"""
-		pass
+		raise NotImplementedError("_image_url needed")
 
 	@staticmethod
 	def _thumbnail_url(post_data):
@@ -55,7 +55,7 @@ class Board():
 		:type post_data: dict
 		:rtype: str
 		"""
-		pass
+		raise NotImplementedError("_thumbnail_url needed")
 
 	@staticmethod
 	def _sample_url(post_data):
@@ -65,7 +65,7 @@ class Board():
 		:type post_data: dict
 		:rtype: str
 		"""
-		pass
+		raise NotImplementedError("_sample_url needed")
 
 	@classmethod
 	def get_posts(cls):
@@ -92,8 +92,6 @@ class Board():
 		if(response.content):
 			result = response.json()
 		for item in result:
-			if type(item['tags']) is str:
-				item['tags'] = item['tags'].strip().split()
 			item['tags'] = set(item['tags'])
 			if 'thumbnail_url' not in item:
 				item['thumbnail_url'] = cls._thumbnail_url(item)
@@ -109,8 +107,12 @@ class GelbooruProvider(Board):
 
 	@staticmethod
 	def _list_url(tags=None, page=0):
+		if tags is None:
+			tags=""
+		elif type(tags) is not str:
+			raise TypeError("tags argument must be an string")
 		return "http://gelbooru.com/index.php?page=dapi&json=1&q=index" + \
-		       "&s=post" + "&tags=" + str(tags) + "&pid=" + str(page)
+		       "&s=post" + "&tags=" + tags + "&pid=" + str(page)
 
 	@staticmethod
 	def _image_url(post_data):
@@ -133,8 +135,12 @@ class TbibProvider(Board):
 
 	@staticmethod
 	def _list_url(tags=None, page=0):
+		if tags is None:
+			tags=""
+		elif type(tags) is not str:
+			raise TypeError("tags argument must be an string")
 		return "http://tbib.org/index.php?page=dapi&json=1&q=index" + \
-		       "&s=post" + "&tags=" + str(tags) + "&pid=" + str(page)
+		       "&s=post" + "&tags=" + tags + "&pid=" + str(page)
 
 	@staticmethod
 	def _image_url(post_data):
