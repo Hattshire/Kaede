@@ -1,4 +1,29 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "kaede"
+author = "Oliver Hattshire"
+author-email = "hattshire@gmail.com"
+home-page = "https://github.com/Hattshire/Kaede"
+description-file = "README.md"
+requires-python = "~=3.6"
+requires=[
+    "appdirs",
+    "pygobject",
+    "requests",
+]
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Environment :: X11 Applications :: GTK",
+    "Topic :: Desktop Environment :: Gnome",
+    "Topic :: Multimedia :: Graphics :: Viewers",
+    "License :: OSI Approved :: The Unlicense (Unlicense)",
+]
 

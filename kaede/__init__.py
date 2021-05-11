@@ -1,1 +1,2 @@
-___version___ = '0.1.0'
+"""Image-board browser"""
+__version__ = "0.1.0"
