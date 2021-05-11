@@ -14,7 +14,9 @@ class Post():
 	"""
 
 	__required_keys__ = ('id', 'thumbnail_url', 'tags', 'image_url', 'rating')
+	#                     str   str              set     str          str
 	__standard_keys__ = ('author', 'date', 'hash', 'height', 'width')
+	#                     str       int     str     int       int
 	# 'sample_url's are optional, but recommended, as they're scaled down versions
 	# of the original image and can be loaded quicker.
 
@@ -40,10 +42,8 @@ class Post():
 			else:
 				self._data[key] = data[key]
 
-		if type(self._data['tags']) is str:
-			self._data['tags'] = self._data['tags'].strip().split()
-		elif type(self._data['tags']) is not list:
-			raise TypeError('Invalid type of `tags` value')
+		if not isinstance(self._data['tags'], (tuple,list,set,frozenset)):
+			raise TypeError('Invalid type of `tags` value (%s)' % str(type(self._data['tags'])))
 
 		self.Thumbnail = Image(self._data['thumbnail_url'])
 		self.Image = Image(self._data['image_url'])
@@ -51,8 +51,7 @@ class Post():
 			self.Sample = Image(data['sample_url'])
 
 	def __dir__(self):
-		return ['image', 'sample', 'thumbnail', ] + \
-		       list(Post.__required_keys__) + list(Post.__standard_keys__)
+		return {'image', 'sample', 'thumbnail', }.union(set(self._data.keys()))
 
 	def __repr__(self):
 		"""Create an string representation."""
@@ -144,7 +143,7 @@ class SearchHelper():
 		"""
 		if type(tags) is not list:
 			if type(tags) is str:
-				self.tags = [tags]
+				self.tags = [tags.strip().split()]
 			elif type(tags) is None:
 				self.tags = []
 			else:
@@ -157,8 +156,7 @@ class SearchHelper():
 
 	def __repr__(self):
 		"""Create an string representation."""
-		return "PostManager(count=%i, tags=[%s])" % (len(self.posts),
-		                                             ', '.join(self.tags))
+		return "PostManager(count=%i, tags=[%s])" % (len(self.posts), ', '.join(self.tags))
 
 	def __getitem__(self, post_id):
 		"""Emulate a mapping behaviour.
@@ -193,6 +191,9 @@ class SearchHelper():
 	def __call__(self):
 		"""Search on instance call (shortcut for self.more)"""
 		return self.more()
+	
+	def __len__(self):
+		return len(self.posts)
 
 	def ids(self):
 		"""Retrieve the stored post ids."""
@@ -200,7 +201,7 @@ class SearchHelper():
 
 	def more(self):
 		"""Retrieve the next load of posts."""
-		tags = self.tags
+		tags = self.tags.copy()
 		data = self.board_provider.search(tags, self.loaded_pages)
 
 		if(data):

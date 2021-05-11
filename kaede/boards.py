@@ -92,6 +92,9 @@ class Board():
 		if(response.content):
 			result = response.json()
 		for item in result:
+			if type(item['tags']) is str:
+				item['tags'] = item['tags'].strip().split()
+			item['tags'] = set(item['tags'])
 			if 'thumbnail_url' not in item:
 				item['thumbnail_url'] = cls._thumbnail_url(item)
 			if 'image_url' not in item:
