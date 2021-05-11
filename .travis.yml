@@ -1,14 +1,18 @@
 language: python
-sudo: required
+
 python:
  - "3.6"
  - "3.7"
  - "3.8"
+ - "3.9"
+
 install:
  - "pip install flit"
  - "flit install --deps all"
  - "flit build"
+
 script:
  - python -m "pytest"
+
 after_success:
  - coveralls

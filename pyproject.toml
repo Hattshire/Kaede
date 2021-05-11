@@ -6,21 +6,24 @@ build-backend = "flit.buildapi"
 module = "kaede"
 author = "Oliver Hattshire"
 author-email = 'com.gmail:hattshire'
-description-file = "README.md"
-dist-name = "libkaede"
 home-page = "https://github.com/hattshire/kaede"
-requires = ["requests"]
+description-file = "README.md"
 requires-python = "~=3.6"
+requires = ["requests"]
+dist-name = "libkaede"
 
 classifiers = [
-	"Intended Audience :: Developers",
+    "Intended Audience :: Developers",
     "Development Status :: 1 - Planning",
-	"Programming Language :: Python",
-	"Programming Language :: Python :: 3",
-	"Topic :: Software Development :: Libraries :: Python Modules",
-	"Operating System :: OS Independent",
-	"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: The Unlicense (Unlicense)","Topic :: Internet",
 ]
 
 [tool.flit.metadata.urls]
@@ -28,9 +31,9 @@ classifiers = [
 
 [tool.flit.metadata.requires-extra]
 test = [
-	"pytest",
-	"pytest-cov",
-	"httpretty"
+    "pytest",
+    "pytest-cov",
+    "httpretty"
 ]
 doc = ["sphinx"]
 
