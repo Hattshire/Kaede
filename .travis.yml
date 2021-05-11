@@ -15,4 +15,6 @@ script:
  - python -m "pytest"
 
 after_success:
+ - pip install coveralls
+ - coverage run --source kaede -m pytest tests/
  - coveralls
