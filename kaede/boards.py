@@ -78,15 +78,15 @@ class TbibProvider(BoardProvider):
     def _url(self, key, data=None, page=0):
         tail = {'list': "&s=post",
                 'comments': "&s=comment"}
-        return "http://tbib.org/index.php?page=dapi&json=1" + \
+        return "https://tbib.org/index.php?page=dapi&json=1" + \
                "&q=index" + tail[key] + "&" + str(data) + "&pid=" + str(page)
 
     def _image_url(self, post_data):
-        url = "http://tbib.org//images/" + \
-              post_data['directory'] + '/' + post_data['image']
+        url = "https://tbib.org//images/" + \
+              str(post_data['directory']) + '/' + str(post_data['image'])
         return url
 
     def _thumbnail_url(self, post_data):
-        url = "http://tbib.org/thumbnails/" + \
-              post_data['directory'] + '/thumbnail_' + post_data['image']
+        url = "https://tbib.org/thumbnails/" + \
+                str(post_data['directory']) + '/thumbnail_' + '.'.join(str(post_data['image']).split('.')[0:-1]) + '.jpg'
         return url

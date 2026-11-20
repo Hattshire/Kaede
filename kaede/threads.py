@@ -67,11 +67,11 @@ class SearchThread(StopableThread):
             try:
                 pixbuf_loader = GdkPixbuf.PixbufLoader.new()
                 pixbuf_loader.write(image_data)
-
-                item['thumbnail_pixbuf'] = pixbuf_loader.get_pixbuf()
                 pixbuf_loader.close()
-            except:
-                pass # TODO LOG or something
+                item['thumbnail_pixbuf'] = pixbuf_loader.get_pixbuf()
+            except Exception as e:
+                print("Exceprion:", e)
+                continue # TODO LOG or something
 
             if item['thumbnail_pixbuf'] is None:
                 continue
@@ -89,9 +89,9 @@ class ImageLoadThread(StopableThread):
         if not self.stopped():
             pixbuf_loader = GdkPixbuf.PixbufLoader.new()
             pixbuf_loader.write(image_data)
+            pixbuf_loader.close()
 
             pixbuf = pixbuf_loader.get_pixbuf()
-            pixbuf_loader.close()
 
             if pixbuf is None:
                 return
