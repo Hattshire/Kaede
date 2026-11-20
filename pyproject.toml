@@ -1,15 +1,14 @@
 [build-system]
-requires = ["flit_core >=3.10,<5"]
+requires = ["flit_core >=3.2,<5"]
 build-backend = "flit_core.buildapi"
 
 [project]
 name = "kaede"
 dynamic = [ "version", "description" ]
-author = "Oliver Hattshire"
-author-email = "hattshire@gmail.com"
-home-page = "https://github.com/Hattshire/Kaede"
+authors = [ { name = "Oliver Hattshire", email = "hattshire@gmail.com" } ]
+urls = { Source = "https://github.com/Hattshire/Kaede" }
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.6,<4"
 dependencies=[
     "appdirs",
     "pygobject",
