@@ -1,15 +1,16 @@
 [build-system]
-requires = ["flit_core >=2,<4"]
+requires = ["flit_core >=3.10,<5"]
 build-backend = "flit_core.buildapi"
 
-[tool.flit.metadata]
-module = "kaede"
+[project]
+name = "kaede"
+dynamic = [ "version", "description" ]
 author = "Oliver Hattshire"
 author-email = "hattshire@gmail.com"
 home-page = "https://github.com/Hattshire/Kaede"
-description-file = "README.md"
-requires-python = "~=3.6"
-requires=[
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies=[
     "appdirs",
     "pygobject",
     "requests",
